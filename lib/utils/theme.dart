@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
 
-ThemeData lightTheme() => ThemeData(
-      primarySwatch: Colors.pink,
-    );
+ThemeData lightTheme(MaterialColor color) => ThemeData(primarySwatch: color);
+
