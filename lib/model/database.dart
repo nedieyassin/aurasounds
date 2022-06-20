@@ -57,12 +57,44 @@ class DBModel {
     return SongModel(_map);
   }
 
+  FolderModel _toFolderModel(Map<String, dynamic> info) {
+    return FolderModel(
+      folder: info['folder'],
+      folderUri: info['folder_uri'],
+      numberOfSongs: info['number_of_songs'],
+    );
+  }
+
   Future<List<SongModel>> getAllSongs(String sv, String so) async {
     Database _database = await _initDB();
     List<Map<String, dynamic>> _sl = await _database.rawQuery(
       'SELECT * FROM music ORDER BY $sv $so',
     );
     return _sl.map((rs) => _toSongModel(rs)).toList();
+  }
+
+  Future<List<SongModel>> getFolderSongs(String fl) async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT * FROM music WHERE folder_uri='$fl' ORDER BY title ASC''',
+    );
+    return _sl.map((rs) => _toSongModel(rs)).toList();
+  }
+
+  Future<List<SongModel>> getRecentlyPlayedSongs() async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT * FROM music ORDER BY date_last_played DESC LIMIT 3''',
+    );
+    return _sl.map((rs) => _toSongModel(rs)).toList();
+  }
+
+  Future<List<FolderModel>> getAllSongFolders() async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT folder, folder_uri,COUNT(folder_uri) as number_of_songs FROM 'music'  GROUP BY folder, folder_uri''',
+    );
+    return _sl.map((rs) => _toFolderModel(rs)).toList();
   }
 
   Future<bool> updateLibrary(List<SongModel> songs) async {
@@ -109,7 +141,7 @@ class DBModel {
             song.artist,
             song.album,
             song.duration,
-            folderUri,
+            folderUri.replaceAll('/', '-'),
             folder,
             song.dateAdded,
             song.size
@@ -119,4 +151,16 @@ class DBModel {
     }
     return true;
   }
+}
+
+class FolderModel {
+  const FolderModel({
+    required this.folder,
+    required this.folderUri,
+    required this.numberOfSongs,
+  });
+
+  final String folder;
+  final String folderUri;
+  final int numberOfSongs;
 }

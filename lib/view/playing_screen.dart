@@ -33,8 +33,8 @@ class PlayingScreen extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.white.withOpacity(0.6),
-                  Colors.white.withOpacity(.9),
+                  Colors.white.withOpacity(0.7),
+                  Colors.white.withOpacity(0.7),
                 ],
               )),
               child: SafeArea(
@@ -49,30 +49,28 @@ class PlayingScreen extends StatelessWidget {
                             child: Text(
                               "Now Playing",
                               style: xheading.copyWith(
-                                  color: Colors.grey.shade600,
+                                  color: Colors.black,
                                   shadows: [],
                                   fontFamily: 'Cust'),
                             ),
                           ),
                         ),
                         Container(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: QueryArtworkWidget(
-                              id: int.parse(controller.id.value),
-                              quality: 100,
-                              type: ArtworkType.AUDIO,
-                              artworkHeight: 260,
-                              artworkBorder: BorderRadius.zero,
-                              nullArtworkWidget: Image.asset(
-                                'lib/assets/art.png',
-                                fit: BoxFit.cover,
-                                height: 260,
-                              ),
+                          child: QueryArtworkWidget(
+                            id: int.parse(controller.id.value),
+                            quality: 100,
+                            type: ArtworkType.AUDIO,
+                            artworkHeight: 260,
+                            artworkBorder: BorderRadius.zero,
+                            artworkFit:BoxFit.contain,
+                            nullArtworkWidget: Image.asset(
+                              'lib/assets/art.png',
+                              fit: BoxFit.contain,
+                              height: 260,
                             ),
                           ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 40),
+                              horizontal: 0, vertical: 40),
                         ),
                         Expanded(child: Container()),
                         Container(
@@ -132,37 +130,6 @@ class PlayingScreen extends StatelessWidget {
                               top: 20, left: 20, right: 20),
                           child: Column(
                             children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 22),
-                                child: StreamBuilder<Duration>(
-                                    stream: controller.hasCurrent.value
-                                        ? controller.player.value.positionStream
-                                        : const Stream.empty(),
-                                    builder: (context, snapshot) {
-                                      // int? duration = 0;
-                                      // if (hasCurrent) {
-                                      //   duration = 1;
-                                      // }
-
-                                      int? current = snapshot.hasData
-                                          ? snapshot.data!.inMilliseconds
-                                          : 0;
-
-                                      return Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(formatDuration(
-                                              Duration(milliseconds: current))),
-                                          Text(formatDuration(
-                                              controller.duration.value)),
-                                        ],
-                                      );
-                                    }),
-                              ),
                               StreamBuilder<Duration>(
                                 stream: controller.hasCurrent.value
                                     ? controller.player.value.positionStream
@@ -178,6 +145,8 @@ class PlayingScreen extends StatelessWidget {
                                             .duration.value.inMilliseconds;
                                   }
                                   return Slider(
+                                    // activeColor: Colors.black,
+                                    inactiveColor:Colors.grey.shade600,
                                     onChanged: (double value) {
                                       if (controller.hasCurrent.value) {
                                         controller.player.value.seek(Duration(
@@ -188,9 +157,35 @@ class PlayingScreen extends StatelessWidget {
                                       }
                                     },
                                     value: value,
-                                    inactiveColor: Colors.grey.shade400,
                                   );
                                 },
+                              ),
+                              Padding(
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 22),
+                                child: StreamBuilder<Duration>(
+                                    stream: controller.hasCurrent.value
+                                        ? controller.player.value.positionStream
+                                        : const Stream.empty(),
+                                    builder: (context, snapshot) {
+
+                                      int? current = snapshot.hasData
+                                          ? snapshot.data!.inMilliseconds
+                                          : 0;
+
+                                      return Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                        children: [
+                                          Text(formatDuration(
+                                              Duration(milliseconds: current))),
+                                          Text(formatDuration(
+                                              controller.duration.value)),
+                                        ],
+                                      );
+                                    }),
                               ),
                             ],
                           ),

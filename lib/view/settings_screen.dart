@@ -36,11 +36,10 @@ class SettingsScreen extends StatelessWidget {
               intro: 'Load new songs into aurasounds\'s song database',
               buttonText: 'Update Library',
               onTap: () {
-                Get.bottomSheet( XBottomSheet(
+                Get.bottomSheet(XBottomSheet(
                   title: 'Update Song Library',
                   body: UpdateLibrary(),
                 ));
-
               },
               focus: true,
             ),
@@ -149,11 +148,12 @@ class XListTile extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.all(Radius.circular(16)),
-            border: focus
-                ? Border.all(width: 2, color: Theme.of(context).primaryColor)
-                : Border.all(color: Colors.grey.shade200)),
+          color: Colors.white,
+          borderRadius: const BorderRadius.all(Radius.circular(16)),
+          border: focus
+              ? Border.all(width: 2, color: Theme.of(context).primaryColor)
+              : Border.all(color: Colors.grey.shade200),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

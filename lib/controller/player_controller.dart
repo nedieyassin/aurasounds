@@ -9,13 +9,25 @@ class PlayerController extends GetxController {
   final OnAudioQuery _audioQuery = OnAudioQuery();
   final DBModel _db = DBModel();
   RxList<SongModel> songList = <SongModel>[].obs;
-  RxInt noOfSongs = 0.obs;
+  RxList<SongModel> folderSongList = <SongModel>[].obs;
+  RxList<SongModel> recentlyPlayedSongList = <SongModel>[].obs;
+  RxList<FolderModel> folderList = <FolderModel>[].obs;
+
+  RxInt noOfAllSongs = 0.obs;
+  RxInt noOfAllFolders = 0.obs;
+  RxInt noOfFolderSongs = 0.obs;
+  RxInt noOfRecentlyPlayedSongs = 0.obs;
+  RxInt noOfFavSongs = 0.obs;
+
   Rx<AudioPlayer> player = AudioPlayer().obs;
   RxInt getCurrentAudioIndex = 0.obs;
   RxInt getCurrentAudioId = 0.obs;
 
-  RxString getCurrentTabText = 'All Songs'.obs;
-  RxString getCurrentTabValue = 'allsongs'.obs;
+  RxString getCurrentPlaylistValue = ''.obs;
+
+  RxString getCurrentFolderText = ''.obs;
+  RxString getCurrentFolderValue = ''.obs;
+  RxBool isInFolder = false.obs;
 
   Rx<Uint8List> artByteArray = Uint8List(0).obs;
   RxBool hasArtByteArray = false.obs;
@@ -50,31 +62,9 @@ class PlayerController extends GetxController {
     },
   ].obs;
 
-  final List<Map<String, String>> tabType = [
-    {
-      'label': 'All Songs',
-      'value': 'allsongs',
-    },
-    {
-      'label': 'Folders',
-      'value': 'folders',
-    },
-    {
-      'label': 'Favourites',
-      'value': 'favourites',
-    },
-    {
-      'label': 'Recently Played',
-      'value': 'recentlyplayed',
-    },
-    {
-      'label': 'Mostly Played',
-      'value': 'mostlyplayed',
-    },
-  ];
-
   RxString sortValue = 'date_added.DESC'.obs;
-  RxString tabValue = 'allsongs'.obs;
+
+  // RxString tabValue = 'allsongs'.obs;
 
   RxString id = ''.obs;
   RxString title = ''.obs;
@@ -86,28 +76,23 @@ class PlayerController extends GetxController {
     return meta.isNotEmpty ? meta : '<unknown>';
   }
 
-  void getTab(String value) {
-    for (Map<String, String> el in tabType) {
-      if (el['value'] == value) {
-
-        getCurrentTabText.value = el['label'] ?? 'All Songs';
-        getCurrentTabValue.value = el['value'] ?? 'allsongs';
-
-        print(getCurrentTabText.value);
-
-        break;
-      }
-    }
+  SongModel getAudio(int index) {
+    return songList[index];
+  }
+  SongModel getRecentlyPlayedAudio(int index) {
+    return recentlyPlayedSongList[index];
   }
 
-  void setSortOrder(String sort) {
-    sortValue.value = sort;
-    getPlaylist();
+  SongModel getFolderAudio(int index) {
+    return folderSongList[index];
   }
 
-  void setTab(String tab) {
-    getTab(tab);
-    tabValue.value = tab;
+  FolderModel getFolder(int index) {
+    return folderList[index];
+  }
+
+  List<SongModel> getAudios() {
+    return songList;
   }
 
   getArtByteArray() async {
@@ -122,6 +107,25 @@ class PlayerController extends GetxController {
     } else {
       hasArtByteArray.value = false;
     }
+  }
+
+  void setSortOrder(String sort) {
+    sortValue.value = sort;
+    getCurrentPlaylistValue.value = '';
+    _initGetAllSongs();
+  }
+
+  void setFolder(String text, String value) {
+    getCurrentFolderText.value = text;
+    getCurrentFolderValue.value = value;
+    isInFolder.value = true;
+    _initGetFolderSongs();
+  }
+
+  void resetFolder() {
+    isInFolder.value = false;
+    getCurrentFolderText.value = '';
+    getCurrentFolderValue.value = '';
   }
 
   void _listenForChangesInSequenceState() {
@@ -148,10 +152,11 @@ class PlayerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getPlaylist();
+    _initGetAllSongs(open: false);
+    _initGetAllFolders();
+    _initGetRecentlyPlayedSongs();
     _listenForChangesInSequenceState();
     player.value.currentIndexStream.listen((event) {
-      //print(event);
       updateCurrentAudioId();
     });
   }
@@ -185,26 +190,42 @@ class PlayerController extends GetxController {
     getArtByteArray();
   }
 
-  SongModel getAudio(int index) {
-    return songList[index];
-  }
-
-  List<SongModel> getAudios() {
-    return songList;
-  }
-
-  Future<void> getPlaylist() async {
-    noOfSongs.value = 0;
-    openPlaylist([]);
+  Future<void> _initGetAllSongs({open = false}) async {
+    noOfAllSongs.value = 0;
     songList.value = await _db.getAllSongs(
-        sortValue.value.split('.').first, sortValue.value.split('.').last);
-    noOfSongs.value = songList.value.length;
-    await openPlaylist(songList.value);
-    updateCurrentAudioId();
+      sortValue.value.split('.').first,
+      sortValue.value.split('.').last,
+    );
+    noOfAllSongs.value = songList.value.length;
+
+    if (open) {
+      openPlaylist(songList.value);
+    }
+  }
+
+  Future<void> _initGetFolderSongs() async {
+    noOfFolderSongs.value = 0;
+    folderSongList.value =
+        await _db.getFolderSongs(getCurrentFolderValue.value);
+    noOfFolderSongs.value = folderSongList.value.length;
+  }
+
+  Future<void> _initGetRecentlyPlayedSongs() async {
+    noOfRecentlyPlayedSongs.value = 0;
+    recentlyPlayedSongList.value = await _db.getRecentlyPlayedSongs();
+    noOfRecentlyPlayedSongs.value = recentlyPlayedSongList.value.length;
+  }
+
+  Future<void> _initGetAllFolders() async {
+    noOfAllFolders.value = 0;
+    if (folderList.value.isEmpty) {
+      folderList.value = await _db.getAllSongFolders();
+    }
+    noOfAllFolders.value = folderList.value.length;
   }
 
   Future<void> openPlaylist(List<SongModel> playlist) async {
-    player.value.setAudioSource(
+    await player.value.setAudioSource(
       ConcatenatingAudioSource(
         useLazyPreparation: true,
         children: playlist
@@ -225,7 +246,17 @@ class PlayerController extends GetxController {
     );
   }
 
-  Future<void> startPlaylist({position = 0}) async {
+  Future<void> startPlaylist({position = 0, required String playlist}) async {
+    if (getCurrentPlaylistValue.value != playlist) {
+      if (playlist == 'allsongs') {
+        player.value.pause();
+        await openPlaylist(songList);
+        getCurrentPlaylistValue.value = playlist;
+      } else if (playlist.contains('foldersongs')) {
+        await openPlaylist(folderSongList);
+        getCurrentPlaylistValue.value = playlist;
+      }
+    }
     await player.value.seek(const Duration(seconds: 0), index: position);
     player.value.play();
     getCurrentAudioIndex.value = position;
