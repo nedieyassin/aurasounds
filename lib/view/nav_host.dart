@@ -49,11 +49,11 @@ class NavHost extends StatelessWidget {
                     filter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
                     child: Column(
                       children: [
-                        GetX<PlayerController>(
-                          builder: (controller) {
-                            return controller.id.value.isNotEmpty ? const MiniPlayer() : Container();
-                          }
-                        ),
+                        GetX<PlayerController>(builder: (controller) {
+                          return controller.id.value.isNotEmpty
+                              ? const MiniPlayer()
+                              : Container();
+                        }),
                         Container(
                           height: 72,
                           width: MediaQuery.of(context).size.width,
@@ -168,13 +168,20 @@ class MiniPlayer extends StatelessWidget {
     return GetX<PlayerController>(builder: (controller) {
       return Container(
         width: MediaQuery.of(context).size.width,
-        color: Colors.white.withOpacity(.1),
+        decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.1),
+            border:  Border(
+              top: BorderSide(
+                width: 2,
+                color: Colors.grey.withOpacity(.05),
+              ),
+            )),
         child: ListTile(
-          onTap: (){
+          onTap: () {
             openNowPlaying(context);
           },
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10, vertical: 0),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
           leading: ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: QueryArtworkWidget(
@@ -199,15 +206,12 @@ class MiniPlayer extends StatelessWidget {
                   ? controller.player.value.positionStream
                   : const Stream.empty(),
               builder: (context, snapshot) {
-                int? current = snapshot.hasData
-                    ? snapshot.data!.inMilliseconds
-                    : 0;
+                int? current =
+                    snapshot.hasData ? snapshot.data!.inMilliseconds : 0;
 
                 return Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment:
-                      CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       formatDuration(
@@ -228,22 +232,17 @@ class MiniPlayer extends StatelessWidget {
                 controller.play();
               },
               color: Colors.white,
-              splashColor: Theme.of(context)
-                  .primaryColor
-                  .withOpacity(.5),
+              splashColor: Theme.of(context).primaryColor.withOpacity(.5),
               icon: StreamBuilder<bool>(
-                  stream:
-                      controller.player.value.playingStream,
+                  stream: controller.player.value.playingStream,
                   builder: (context, asyncSnapshot) {
                     if (asyncSnapshot.hasData) {
-                      bool playing =
-                          asyncSnapshot.data as bool;
+                      bool playing = asyncSnapshot.data as bool;
                       return Icon(playing
                           ? Icons.pause_rounded
                           : Icons.play_arrow_rounded);
                     } else {
-                      return const Icon(
-                          Icons.play_arrow_outlined);
+                      return const Icon(Icons.play_arrow_outlined);
                     }
                   }),
             ),

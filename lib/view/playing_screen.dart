@@ -2,10 +2,12 @@ import 'dart:ui';
 import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/utils/helpers.dart';
+import 'package:aurasounds/view/components/song_tile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 class PlayingScreen extends StatelessWidget {
@@ -44,37 +46,65 @@ class PlayingScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 26),
-                          child: Center(
-                            child: Text(
-                              "Now Playing",
-                              style: xheading.copyWith(
-                                  color: Colors.black,
-                                  shadows: [],
-                                  fontFamily: 'Cust'),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: QueryArtworkWidget(
-                            id: int.parse(controller.id.value),
-                            quality: 100,
-                            type: ArtworkType.AUDIO,
-                            artworkHeight: 260,
-                            artworkBorder: BorderRadius.zero,
-                            artworkFit:BoxFit.contain,
-                            nullArtworkWidget: Image.asset(
-                              'lib/assets/art.png',
-                              fit: BoxFit.contain,
-                              height: 260,
-                            ),
-                          ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 0, vertical: 40),
+                              vertical: 26, horizontal: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Now Playing",
+                                style: xheading.copyWith(
+                                    color: Colors.black, fontFamily: 'Cust'),
+                              ),
+                              ElevatedButton(
+                                child: const Text(
+                                  'Lyrics',
+                                ),
+                                onPressed: () {
+                                  controller.toggleMiniLyrics();
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all(
+                                    Theme.of(context).scaffoldBackgroundColor,
+                                  ),
+                                  foregroundColor:
+                                      MaterialStateProperty.all(Colors.black),
+                                  padding: MaterialStateProperty.all(
+                                    const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 2),
+                                  ),
+                                  shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(99),
+                                    ),
+                                  ),
+                                  elevation: MaterialStateProperty.all(0),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
-                        Expanded(child: Container()),
+                        !controller.openLyrics.value
+                            ? const ArtWork()
+                            : Expanded(
+                                child: SingleChildScrollView(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16, horizontal: 10),
+                                    child: Text(
+                                      controller.getLyricsValue.value,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        !controller.openLyrics.value
+                            ? Expanded(child: Container())
+                            : Container(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.only(
+                              left: 20, right: 20, top: 10),
                           child: Center(
                             child: Text(
                               controller.getMeta(
@@ -146,7 +176,7 @@ class PlayingScreen extends StatelessWidget {
                                   }
                                   return Slider(
                                     // activeColor: Colors.black,
-                                    inactiveColor:Colors.grey.shade600,
+                                    inactiveColor: Colors.grey.shade600,
                                     onChanged: (double value) {
                                       if (controller.hasCurrent.value) {
                                         controller.player.value.seek(Duration(
@@ -162,22 +192,21 @@ class PlayingScreen extends StatelessWidget {
                               ),
                               Padding(
                                 padding:
-                                const EdgeInsets.symmetric(horizontal: 22),
+                                    const EdgeInsets.symmetric(horizontal: 22),
                                 child: StreamBuilder<Duration>(
                                     stream: controller.hasCurrent.value
                                         ? controller.player.value.positionStream
                                         : const Stream.empty(),
                                     builder: (context, snapshot) {
-
                                       int? current = snapshot.hasData
                                           ? snapshot.data!.inMilliseconds
                                           : 0;
 
                                       return Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                            MainAxisAlignment.spaceBetween,
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.center,
+                                            CrossAxisAlignment.center,
                                         children: [
                                           Text(formatDuration(
                                               Duration(milliseconds: current))),
@@ -273,7 +302,7 @@ class PlayingScreen extends StatelessWidget {
                                           : Icons.repeat_outlined,
                                       color: mode != LoopMode.off
                                           ? Theme.of(context).primaryColor
-                                          : Colors.grey.shade600,
+                                          : Colors.black,
                                     ),
                                   );
                                 },
@@ -306,8 +335,7 @@ class PlayingScreen extends StatelessWidget {
                                 iconSize: 30,
                                 onPressed: () {
                                   Get.bottomSheet(
-                                    const PlaylistQueue(),
-                                    persistent: true,
+                                    PlaylistQueue(),
                                   );
                                 },
                                 icon: const Icon(Icons.queue_music_rounded),
@@ -328,10 +356,46 @@ class PlayingScreen extends StatelessWidget {
   }
 }
 
-class PlaylistQueue extends StatelessWidget {
-  const PlaylistQueue({
+class ArtWork extends StatelessWidget {
+  const ArtWork({
     Key? key,
   }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: GetX<PlayerController>(
+        builder: (controller) {
+          return QueryArtworkWidget(
+            id: int.parse(controller.id.value),
+            quality: 100,
+            type: ArtworkType.AUDIO,
+            artworkHeight: 260,
+            artworkBorder: BorderRadius.zero,
+            artworkFit: BoxFit.contain,
+            nullArtworkWidget: Image.asset(
+              'lib/assets/art.png',
+              fit: BoxFit.contain,
+              height: 260,
+            ),
+          );
+        },
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 40),
+    );
+  }
+}
+
+class PlaylistQueue extends StatelessWidget {
+  PlaylistQueue({
+    Key? key,
+  }) : super(key: key);
+
+  var playerController = Get.find<PlayerController>();
+
+  Future<void> playAudios(int position) async {
+    await playerController.playQueueAt(position: position);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -344,18 +408,27 @@ class PlaylistQueue extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: Text(
-              'Current Playlist',
+              'Current Queue',
               style: xtitle,
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: 100,
-              itemBuilder: (context, int index) {
-                return ListTile(
-                  title: Text('Item $index'),
-                );
-              },
+            child: Scrollbar(
+              child: ListView.builder(
+                itemCount: (playerController.player.value.sequence ?? []).length,
+                itemBuilder: (context, int index) {
+                  MediaItem audio = playerController.getQueueAudio(playerController.currentQueueList[index]);
+                  return SongTile(
+                    startPlaylist: (int pos) async {
+                      await playAudios(pos);
+                    },
+                    audio: audio,
+                    index: playerController.currentQueueList[index],
+                    isLast: index + 1 ==
+                        (playerController.player.value.sequence ?? []).length,
+                  );
+                },
+              ),
             ),
           )
         ],

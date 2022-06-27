@@ -37,7 +37,7 @@ class FolderTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text('${folder.numberOfSongs.toString()} song(s)'),
+        subtitle: Text('${folder.numberOfSongs.toString()} song${folder.numberOfSongs > 1?'s':''}'),
       ),
     );
   }

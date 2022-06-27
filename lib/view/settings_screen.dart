@@ -77,6 +77,9 @@ class SettingsScreen extends StatelessWidget {
               intro: 'This app is developed and maintained by Yassin Nedie',
               buttonText: 'View Details',
               onTap: () {},
+            ),
+            const SizedBox(
+              height: 200,
             )
           ],
         ),

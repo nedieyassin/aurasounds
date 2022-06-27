@@ -3,6 +3,7 @@ import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/view/components/song_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 class AllSongsPage extends StatelessWidget {
@@ -26,8 +27,11 @@ class AllSongsPage extends StatelessWidget {
             GetX<PlayerController>(
               builder: (controller) {
                 return Padding(
-                  padding:
-                      const EdgeInsets.only(top: 10, left: 16, bottom: 8,),
+                  padding: const EdgeInsets.only(
+                    top: 10,
+                    left: 16,
+                    bottom: 8,
+                  ),
                   child: Text(
                     'All Songs (${controller.noOfAllSongs})',
                     style: xtitle,
@@ -61,13 +65,14 @@ class AllSongsPage extends StatelessWidget {
                   return ListView.builder(
                       itemCount: controller.noOfAllSongs.value,
                       itemBuilder: (BuildContext context, int index) {
-                        SongModel audio = controller.getAudio(index);
+                        MediaItem audio = controller.getAudio(index);
                         return SongTile(
                           startPlaylist: (int pos) async {
                             await playAudios(pos);
                           },
                           audio: audio,
-                          index: index, isLast: index+1 == controller.noOfAllSongs.value,
+                          index: index,
+                          isLast: index + 1 == controller.noOfAllSongs.value,
                         );
                       });
                 },

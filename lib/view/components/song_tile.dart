@@ -4,6 +4,7 @@ import 'package:aurasounds/utils/helpers.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 class SongTile extends StatelessWidget {
@@ -14,7 +15,7 @@ class SongTile extends StatelessWidget {
       required this.startPlaylist,
       required this.isLast})
       : super(key: key);
-  final SongModel audio;
+  final MediaItem audio;
   final int index;
   final bool isLast;
   final Function startPlaylist;
@@ -23,17 +24,18 @@ class SongTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetX<PlayerController>(builder: (controller) {
       return Container(
-        margin: EdgeInsets.only(bottom: isLast ? 160 : 0,left: 10,right: 10,top: 8),
-        padding: const EdgeInsets.only(left: 10,right: 18),
+        margin: EdgeInsets.only(
+            bottom: isLast ? 160 : 0, left: 10, right: 10, top: 8),
+        padding: const EdgeInsets.only(left: 10, right: 18),
         decoration: BoxDecoration(
-          color: controller.getCurrentAudioId.value == audio.id
+          color: controller.getCurrentAudioId.value == int.parse(audio.id)
               ? Theme.of(context).primaryColor.withOpacity(.1)
               : Theme.of(context).scaffoldBackgroundColor,
           borderRadius: const BorderRadius.all(Radius.circular(14)),
-          border: controller.getCurrentAudioId.value == audio.id
+          border: controller.getCurrentAudioId.value == int.parse(audio.id)
               ? Border.all(width: 2, color: Theme.of(context).primaryColor)
-              : Border.all(width: 0,color: Theme.of(context).scaffoldBackgroundColor ),
-
+              : Border.all(
+                  width: 0, color: Theme.of(context).scaffoldBackgroundColor),
         ),
         child: ListTile(
           onTap: () {
@@ -43,7 +45,7 @@ class SongTile extends StatelessWidget {
           leading: ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: QueryArtworkWidget(
-              id: audio.id,
+              id: int.parse(audio.id),
               type: ArtworkType.AUDIO,
               artworkBorder: BorderRadius.zero,
               nullArtworkWidget: Image.asset(
@@ -53,7 +55,8 @@ class SongTile extends StatelessWidget {
               ),
             ),
           ),
-          trailing: Text(formatDuration(Duration(milliseconds:audio.duration!)),style: xtitle.copyWith(fontSize: 14,color: Colors.grey)),
+          trailing: Text(formatDuration(audio.duration!),
+              style: xtitle.copyWith(fontSize: 14, color: Colors.grey)),
           title: Text(
             audio.title,
             maxLines: 1,

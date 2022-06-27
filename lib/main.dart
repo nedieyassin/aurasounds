@@ -38,7 +38,7 @@ class Aura extends StatelessWidget {
 
     return GetX<AppController>(builder: (controller) {
       return GetMaterialApp(
-        title: 'Aura Sounds',
+        title: 'asurasounds',
         theme: lightTheme(controller.appThemeColor.value),
         debugShowCheckedModeBanner: false,
         home: NavHost(),

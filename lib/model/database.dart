@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -36,25 +37,15 @@ class DBModel {
     });
   }
 
-  SongModel _toSongModel(Map<String, dynamic> info) {
-    Map _map = {
-      '_id': info['audio_id'],
-      'artist_id': info['artist_id'],
-      'album_id': info['album_id'],
-      '_data': info['data'],
-      '_uri': info['uri'],
-      'title': info['title'],
-      '_display_name': info['title'],
-      '_display_name_wo_ext': info['title'],
-      'artist': info['artist'],
-      'album': info['album'],
-      'duration': info['duration'],
-      '_size': info['size'],
-      'file_extension': "." + info['data'].split('.').last,
-      'date_added': info['date_added'],
-    };
-
-    return SongModel(_map);
+  MediaItem _toMediaItem(Map<String, dynamic> info) {
+    return MediaItem(
+        id: info['audio_id'].toString(),
+        title: info['title'],
+        artist: info['artist'],
+        album: info['album'],
+        playable: true,
+        duration: Duration(milliseconds: info['duration']),
+        extras: {'uri': info['uri']});
   }
 
   FolderModel _toFolderModel(Map<String, dynamic> info) {
@@ -65,28 +56,53 @@ class DBModel {
     );
   }
 
-  Future<List<SongModel>> getAllSongs(String sv, String so) async {
+  Future<List<MediaItem>> getAllSongs(String sv, String so) async {
     Database _database = await _initDB();
     List<Map<String, dynamic>> _sl = await _database.rawQuery(
       'SELECT * FROM music ORDER BY $sv $so',
     );
-    return _sl.map((rs) => _toSongModel(rs)).toList();
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
   }
 
-  Future<List<SongModel>> getFolderSongs(String fl) async {
+  Future<List<MediaItem>> getFolderSongs(
+      String fl, String sv, String so) async {
     Database _database = await _initDB();
     List<Map<String, dynamic>> _sl = await _database.rawQuery(
-      '''SELECT * FROM music WHERE folder_uri='$fl' ORDER BY title ASC''',
+      '''SELECT * FROM music WHERE folder_uri='$fl' ORDER BY $sv $so''',
     );
-    return _sl.map((rs) => _toSongModel(rs)).toList();
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
   }
 
-  Future<List<SongModel>> getRecentlyPlayedSongs() async {
+  Future<List<MediaItem>> getRecentlyPlayedSongs() async {
     Database _database = await _initDB();
     List<Map<String, dynamic>> _sl = await _database.rawQuery(
-      '''SELECT * FROM music ORDER BY date_last_played DESC LIMIT 3''',
+      '''SELECT * FROM music ORDER BY date_last_played DESC''',
     );
-    return _sl.map((rs) => _toSongModel(rs)).toList();
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
+  }
+
+  Future<List<MediaItem>> getFavouriteSongs() async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT * FROM music  WHERE favourite =1 ORDER BY title DESC ''',
+    );
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
+  }
+
+  Future<List<MediaItem>> searchSongs(q) async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      ''' SELECT * FROM music  WHERE title LIKE '%$q%' OR artist LIKE '%$q%' OR album LIKE '%$q%' ''',
+    );
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
+  }
+
+  Future<List<MediaItem>> getMostPlayedSongs() async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT * FROM music ORDER BY play_count DESC''',
+    );
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
   }
 
   Future<List<FolderModel>> getAllSongFolders() async {
@@ -102,7 +118,7 @@ class DBModel {
       if (!song.isMusic!) continue;
       if (song.isRingtone!) continue;
       if (song.isAlarm!) continue;
-      if (song.duration! < 120000) continue;
+      if (song.duration! < 60000) continue;
 
       Database _database = await _initDB();
       List<Map> _sl = await _database
@@ -137,7 +153,7 @@ class DBModel {
             song.albumId,
             song.data,
             song.uri,
-            song.title,
+            song.title.split('(')[0],
             song.artist,
             song.album,
             song.duration,

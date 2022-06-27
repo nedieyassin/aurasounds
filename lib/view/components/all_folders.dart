@@ -6,6 +6,7 @@ import 'package:aurasounds/view/components/song_tile.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
@@ -87,6 +88,21 @@ class FolderSongsBottomSheet extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  trailing: GetX<PlayerController>(builder: (controller) {
+                    return DropdownButton(
+                      underline: Container(),
+                      items: controller.sortType
+                          .map((item) => DropdownMenuItem(
+                        value: item['value'] as String,
+                        child: Text(item['label']),
+                      ))
+                          .toList(),
+                      value: controller.sortValue.value,
+                      onChanged: (String? value) {
+                        controller.setSortOrder(value!);
+                      },
+                    );
+                  }),
                 );
               },
             ),
@@ -99,7 +115,7 @@ class FolderSongsBottomSheet extends StatelessWidget {
                       return ListView.builder(
                           itemCount: controller.noOfFolderSongs.value,
                           itemBuilder: (BuildContext context, int index) {
-                            SongModel audio = controller.getFolderAudio(index);
+                            MediaItem audio = controller.getFolderAudio(index);
                             return SongTile(
                               startPlaylist: (int pos) async {
                                 await playAudios(pos,
