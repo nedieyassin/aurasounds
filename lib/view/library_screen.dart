@@ -2,12 +2,14 @@ import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/view/components/all_songs.dart';
 import 'package:aurasounds/view/components/search_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class LibraryScreen extends StatelessWidget {
   LibraryScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
@@ -24,7 +26,7 @@ class LibraryScreen extends StatelessWidget {
                   child: Text(
                     'Library',
                     style: xheading.copyWith(
-                      color: Colors.grey.shade600,
+                      color:fcolor.withOpacity(.7),
                       fontFamily: 'Cust',
                     ),
                   ),

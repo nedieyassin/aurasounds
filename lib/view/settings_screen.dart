@@ -1,5 +1,8 @@
 import 'package:aurasounds/utils/constants.dart';
+import 'package:aurasounds/view/components/about.dart';
 import 'package:aurasounds/view/components/change_theme.dart';
+import 'package:aurasounds/view/components/developers.dart';
+import 'package:aurasounds/view/components/terms.dart';
 import 'package:aurasounds/view/components/update_library.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +13,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
@@ -24,7 +28,9 @@ class SettingsScreen extends StatelessWidget {
               child: Text(
                 'Settings',
                 style: xheading.copyWith(
-                    color: Colors.grey.shade600, fontFamily: 'Cust'),
+                  color: fcolor.withOpacity(.7),
+                  fontFamily: 'Cust',
+                ),
               ),
             ),
             const SizedBox(
@@ -36,10 +42,12 @@ class SettingsScreen extends StatelessWidget {
               intro: 'Load new songs into aurasounds\'s song database',
               buttonText: 'Update Library',
               onTap: () {
-                Get.bottomSheet(XBottomSheet(
-                  title: 'Update Song Library',
-                  body: UpdateLibrary(),
-                ));
+                Get.to(
+                  () => XBottomSheet(
+                    title: 'Update Song Library',
+                    body: UpdateLibrary(),
+                  ),
+                );
               },
               focus: true,
             ),
@@ -49,10 +57,12 @@ class SettingsScreen extends StatelessWidget {
               intro: 'Customise aurasounds to look as you wish',
               buttonText: 'Change Theme',
               onTap: () {
-                Get.bottomSheet(XBottomSheet(
-                  title: 'Change Accent Coluor',
-                  body: ChangeTheme(),
-                ));
+                Get.to(
+                  () => XBottomSheet(
+                    title: 'Change Accent Colour',
+                    body: ChangeTheme(),
+                  ),
+                );
               },
             ),
             XListTile(
@@ -61,7 +71,14 @@ class SettingsScreen extends StatelessWidget {
               intro:
                   'The app is copyrighted to its developers, it should not be sold or cloned',
               buttonText: 'See more',
-              onTap: () {},
+              onTap: () {
+                Get.to(
+                      () => const XBottomSheet(
+                    title: 'Terms of Use',
+                    body: TermsScreen(),
+                  ),
+                );
+              },
             ),
             XListTile(
               icon: EvaIcons.infoOutline,
@@ -69,14 +86,28 @@ class SettingsScreen extends StatelessWidget {
               intro:
                   'Aurasounds is a feature rich music player made by music lover for music lovers.',
               buttonText: 'See more',
-              onTap: () {},
+              onTap: () {
+                Get.to(
+                      () => const XBottomSheet(
+                    title: 'About aurasounds',
+                    body: AboutScreen(),
+                  ),
+                );
+              },
             ),
             XListTile(
               icon: EvaIcons.personOutline,
               title: 'Developers',
-              intro: 'This app is developed and maintained by Yassin Nedie',
+              intro: 'This app is developed and maintained by strollec',
               buttonText: 'View Details',
-              onTap: () {},
+              onTap: () {
+                Get.to(
+                  () => const XBottomSheet(
+                    title: 'Developers',
+                    body: Developers(),
+                  ),
+                );
+              },
             ),
             const SizedBox(
               height: 200,
@@ -99,27 +130,46 @@ class XBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Center(
-              child: Text(
-                title,
-                style: xtitle,
-              ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: body,
-            ),
-          )
-        ],
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: fcolor,
+      ),
+      body: SingleChildScrollView(
+        child: body,
+      ),
+    );
+  }
+}
+
+
+class FullPage extends StatelessWidget {
+  const FullPage({
+    Key? key,
+    required this.title,
+    required this.body,
+  }) : super(key: key);
+  final String title;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) {
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
+    return Scaffold(
+      appBar: AppBar(
+        leading: Container(),
+        title: Text(title),
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: fcolor,
+      ),
+      body: SingleChildScrollView(
+        child: body,
       ),
     );
   }
@@ -145,24 +195,28 @@ class XListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        onTap!();
+      },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bcolor.withOpacity(.7),
           borderRadius: const BorderRadius.all(Radius.circular(16)),
           border: focus
               ? Border.all(width: 2, color: Theme.of(context).primaryColor)
-              : Border.all(color: Colors.grey.shade200),
+              : Border.all(color: fcolor.withOpacity(.07)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: fcolor.withOpacity(.1),
                 borderRadius: const BorderRadius.all(
                   Radius.circular(10),
                 ),
@@ -174,7 +228,7 @@ class XListTile extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: 24,
-                  color: Colors.black87,
+                  color: fcolor.withOpacity(.7),
                 ),
               ),
             ),
@@ -185,10 +239,10 @@ class XListTile extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: fcolor,
                     ),
                   ),
                 ),
@@ -212,6 +266,8 @@ class XListTile extends StatelessWidget {
                       },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all(
+                            Theme.of(context).primaryColor.withOpacity(.1)),
+                        foregroundColor: MaterialStateProperty.all(
                             Theme.of(context).primaryColor),
                         padding: MaterialStateProperty.all(
                           const EdgeInsets.symmetric(

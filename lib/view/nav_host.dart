@@ -12,6 +12,7 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:line_icons/line_icons.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
@@ -34,14 +35,16 @@ class NavHost extends StatelessWidget {
               navController.navigateTo(index);
             },
             children: <Widget>[
-              HomeScreen(),
+              const HomeScreen(),
               LibraryScreen(),
               FolderScreen(),
-              SettingsScreen(),
+              const SettingsScreen(),
             ],
           ),
           GetX<NavController>(
             builder: (controller) {
+              Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
+              Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
               return Positioned(
                 bottom: 0,
                 child: ClipRRect(
@@ -57,7 +60,7 @@ class NavHost extends StatelessWidget {
                         Container(
                           height: 72,
                           width: MediaQuery.of(context).size.width,
-                          color: Colors.white.withOpacity(.2),
+                          color: bcolor.withOpacity(.2),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -65,12 +68,10 @@ class NavHost extends StatelessWidget {
                               IconButton(
                                 tooltip: 'Home',
                                 icon: Icon(
-                                  controller.currentIndex.value == 0
-                                      ? EvaIcons.headphones
-                                      : EvaIcons.headphonesOutline,
+                                  LineIcons.headphones,
                                   color: controller.currentIndex.value == 0
                                       ? Theme.of(context).primaryColor
-                                      : Colors.grey.shade700,
+                                      : fcolor.withOpacity(.7),
                                   size: 28,
                                 ),
                                 onPressed: () {
@@ -83,12 +84,10 @@ class NavHost extends StatelessWidget {
                               IconButton(
                                 tooltip: 'Library',
                                 icon: Icon(
-                                  controller.currentIndex.value == 1
-                                      ? EvaIcons.list
-                                      : EvaIcons.listOutline,
+                                  EvaIcons.listOutline,
                                   color: controller.currentIndex.value == 1
                                       ? Theme.of(context).primaryColor
-                                      : Colors.grey.shade700,
+                                      : fcolor.withOpacity(.7),
                                   size: 28,
                                 ),
                                 onPressed: () {
@@ -101,12 +100,10 @@ class NavHost extends StatelessWidget {
                               IconButton(
                                 tooltip: 'Folders',
                                 icon: Icon(
-                                  controller.currentIndex.value == 2
-                                      ? EvaIcons.folder
-                                      : EvaIcons.folderOutline,
+                                  EvaIcons.folderOutline,
                                   color: controller.currentIndex.value == 2
                                       ? Theme.of(context).primaryColor
-                                      : Colors.grey.shade700,
+                                      : fcolor.withOpacity(.7),
                                   size: 28,
                                 ),
                                 onPressed: () {
@@ -119,12 +116,10 @@ class NavHost extends StatelessWidget {
                               IconButton(
                                 tooltip: 'Settings',
                                 icon: Icon(
-                                  controller.currentIndex.value == 3
-                                      ? EvaIcons.settings2
-                                      : EvaIcons.settings2Outline,
+                                  EvaIcons.settings2Outline,
                                   color: controller.currentIndex.value == 3
                                       ? Theme.of(context).primaryColor
-                                      : Colors.grey.shade700,
+                                      : fcolor.withOpacity(.7),
                                   size: 28,
                                 ),
                                 onPressed: () {
@@ -165,12 +160,14 @@ class MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
     return GetX<PlayerController>(builder: (controller) {
       return Container(
         width: MediaQuery.of(context).size.width,
         decoration: BoxDecoration(
-            color: Colors.white.withOpacity(.1),
-            border:  Border(
+            color: bcolor.withOpacity(.16),
+            border: Border(
               top: BorderSide(
                 width: 2,
                 color: Colors.grey.withOpacity(.05),

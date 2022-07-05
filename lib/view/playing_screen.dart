@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 class PlayingScreen extends StatelessWidget {
@@ -16,6 +17,8 @@ class PlayingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
     return GetX<PlayerController>(builder: (controller) {
       return Container(
         decoration: BoxDecoration(
@@ -30,15 +33,7 @@ class PlayingScreen extends StatelessWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 100.0, sigmaY: 100.0),
             child: Container(
-              decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withOpacity(0.7),
-                  Colors.white.withOpacity(0.7),
-                ],
-              )),
+              decoration: BoxDecoration(color: bcolor.withOpacity(.7)),
               child: SafeArea(
                 child: GetX<PlayerController>(
                   builder: (controller) {
@@ -52,13 +47,17 @@ class PlayingScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "Now Playing",
+                                controller.openLyrics.value
+                                    ? "Lyrics"
+                                    : "Now Playing",
                                 style: xheading.copyWith(
-                                    color: Colors.black, fontFamily: 'Cust'),
+                                    color: fcolor, fontFamily: 'Cust'),
                               ),
                               ElevatedButton(
-                                child: const Text(
-                                  'Lyrics',
+                                child: Text(
+                                  !controller.openLyrics.value
+                                      ? "Lyrics"
+                                      : "Close",
                                 ),
                                 onPressed: () {
                                   controller.toggleMiniLyrics();
@@ -68,7 +67,7 @@ class PlayingScreen extends StatelessWidget {
                                     Theme.of(context).scaffoldBackgroundColor,
                                   ),
                                   foregroundColor:
-                                      MaterialStateProperty.all(Colors.black),
+                                      MaterialStateProperty.all(fcolor),
                                   padding: MaterialStateProperty.all(
                                     const EdgeInsets.symmetric(
                                         horizontal: 14, vertical: 2),
@@ -84,24 +83,10 @@ class PlayingScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        !controller.openLyrics.value
-                            ? const ArtWork()
-                            : Expanded(
-                                child: SingleChildScrollView(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16, horizontal: 10),
-                                    child: Text(
-                                      controller.getLyricsValue.value,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(fontSize: 18),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                        !controller.openLyrics.value
-                            ? Expanded(child: Container())
-                            : Container(),
+                        if (!controller.openLyrics.value)
+                          const ArtWork()
+                        else
+                          const Lyrics(),
                         Container(
                           padding: const EdgeInsets.only(
                               left: 20, right: 20, top: 10),
@@ -119,42 +104,47 @@ class PlayingScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 4),
-                          child: Center(
-                            child: Text(
-                              controller.getMeta(
-                                controller.hasCurrent.value
-                                    ? controller.artist.value
-                                    : '',
-                              ),
-                              style: xsubtitle.copyWith(
-                                  color: Colors.grey.shade600),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
+                        if (!controller.openLyrics.value)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 4,
                             ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 0),
-                          child: Center(
-                            child: Text(
-                              controller.getMeta(
-                                controller.hasCurrent.value
-                                    ? controller.album.value
-                                    : '',
-                              ),
-                              style: xsubtitle.copyWith(
-                                  color: Colors.grey.shade600),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
+                            child: Column(
+                              children: [
+                                Center(
+                                  child: Text(
+                                    controller.getMeta(
+                                      controller.hasCurrent.value
+                                          ? controller.artist.value
+                                          : '',
+                                    ),
+                                    style: xsubtitle.copyWith(
+                                        color: fcolor.withOpacity(.7)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Center(
+                                  child: Text(
+                                    controller.getMeta(
+                                      controller.hasCurrent.value
+                                          ? controller.album.value
+                                          : '',
+                                    ),
+                                    style: xsubtitle.copyWith(
+                                        color: fcolor.withOpacity(.7)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
+                          )
+                        else
+                          Container(),
                         Container(
                           padding: const EdgeInsets.only(
                               top: 20, left: 20, right: 20),
@@ -227,18 +217,21 @@ class PlayingScreen extends StatelessWidget {
                             children: [
                               IconButton(
                                   iconSize: 40,
-                                  onPressed: () {
-                                    if (controller.hasCurrent.value) {
-                                      playerController.player.value
-                                          .seekToPrevious();
-                                    }
-                                  },
+                                  onPressed: controller.player.value.hasPrevious
+                                      ? () {
+                                          if (controller.hasCurrent.value) {
+                                            playerController.player.value
+                                                .seekToPrevious();
+                                          }
+                                        }
+                                      : null,
                                   icon:
                                       const Icon(Icons.skip_previous_rounded)),
                               Container(
                                 decoration: BoxDecoration(
-                                    color: Theme.of(context).primaryColor,
-                                    borderRadius: BorderRadius.circular(99)),
+                                  color: Theme.of(context).primaryColor,
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
                                 child: IconButton(
                                   iconSize: 50,
                                   onPressed: () {
@@ -267,82 +260,23 @@ class PlayingScreen extends StatelessWidget {
                               ),
                               IconButton(
                                 iconSize: 40,
-                                onPressed: () {
-                                  if (controller.hasCurrent.value) {
-                                    playerController.player.value.seekToNext();
-                                  }
-                                },
+                                onPressed: controller.player.value.hasNext
+                                    ? () {
+                                        if (controller.hasCurrent.value) {
+                                          playerController.player.value
+                                              .seekToNext();
+                                        }
+                                      }
+                                    : null,
                                 icon: const Icon(Icons.skip_next_rounded),
                               ),
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.only(
-                              left: 20, right: 20, bottom: 30),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              StreamBuilder<LoopMode>(
-                                stream: controller.player.value.loopModeStream,
-                                builder: (context, snapshot) {
-                                  LoopMode mode = LoopMode.off;
-                                  if (snapshot.hasData) {
-                                    mode = snapshot.data ?? LoopMode.off;
-                                  }
-                                  return IconButton(
-                                    iconSize: 30,
-                                    onPressed: () {
-                                      controller.toggleRepeatOne();
-                                    },
-                                    icon: Icon(
-                                      mode == LoopMode.one
-                                          ? Icons.repeat_one_outlined
-                                          : Icons.repeat_outlined,
-                                      color: mode != LoopMode.off
-                                          ? Theme.of(context).primaryColor
-                                          : Colors.black,
-                                    ),
-                                  );
-                                },
-                              ),
-                              StreamBuilder<bool>(
-                                  stream: controller
-                                      .player.value.shuffleModeEnabledStream,
-                                  builder: (context, snapshot) {
-                                    bool shuffle = false;
-                                    if (snapshot.hasData) {
-                                      shuffle = snapshot.data ?? false;
-                                    }
-                                    return IconButton(
-                                      iconSize: 30,
-                                      onPressed: () {
-                                        controller.toggleShuffle();
-                                      },
-                                      icon: Icon(Icons.shuffle_rounded,
-                                          color: shuffle
-                                              ? Theme.of(context).primaryColor
-                                              : Colors.black),
-                                    );
-                                  }),
-                              IconButton(
-                                iconSize: 30,
-                                onPressed: () {},
-                                icon: const Icon(Icons.favorite_outline),
-                              ),
-                              IconButton(
-                                iconSize: 30,
-                                onPressed: () {
-                                  Get.bottomSheet(
-                                    PlaylistQueue(),
-                                  );
-                                },
-                                icon: const Icon(Icons.queue_music_rounded),
-                              ),
-                            ],
-                          ),
-                        )
+                        if (!controller.openLyrics.value)
+                          const Actions()
+                        else
+                          Container()
                       ],
                     );
                   },
@@ -356,6 +290,161 @@ class PlayingScreen extends StatelessWidget {
   }
 }
 
+class Actions extends StatelessWidget {
+  const Actions({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
+    return GetX<PlayerController>(
+      builder: (controller) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 30),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              StreamBuilder<LoopMode>(
+                stream: controller.player.value.loopModeStream,
+                builder: (context, snapshot) {
+                  LoopMode mode = LoopMode.off;
+                  if (snapshot.hasData) {
+                    mode = snapshot.data ?? LoopMode.off;
+                  }
+                  return IconButton(
+                    iconSize: 30,
+                    onPressed: () {
+                      controller.toggleRepeatOne();
+                    },
+                    icon: Icon(
+                      mode == LoopMode.one
+                          ? Icons.repeat_one_outlined
+                          : Icons.repeat_outlined,
+                      color: mode != LoopMode.off
+                          ? Theme.of(context).primaryColor
+                          : fcolor,
+                    ),
+                  );
+                },
+              ),
+              StreamBuilder<bool>(
+                  stream: controller.player.value.shuffleModeEnabledStream,
+                  builder: (context, snapshot) {
+                    bool shuffle = false;
+                    if (snapshot.hasData) {
+                      shuffle = snapshot.data ?? false;
+                    }
+                    return IconButton(
+                      iconSize: 30,
+                      onPressed: () {
+                        controller.toggleShuffle();
+                      },
+                      icon: Icon(
+                        Icons.shuffle_rounded,
+                        color:
+                            shuffle ? Theme.of(context).primaryColor : fcolor,
+                      ),
+                    );
+                  }),
+              IconButton(
+                iconSize: 30,
+                onPressed: () {
+                  controller.toggleFavourite();
+                },
+                icon: controller.isFavourite.value
+                    ? const Icon(
+                        Icons.favorite,
+                        color: Colors.red,
+                      )
+                    : const Icon(Icons.favorite_outline),
+              ),
+              IconButton(
+                iconSize: 30,
+                onPressed: () {
+                  showMaterialModalBottomSheet(
+                    context: context,
+                    builder: (context) => PlaylistQueue(),
+                  );
+                },
+                icon: const Icon(Icons.queue_music_rounded),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class Lyrics extends StatelessWidget {
+  const Lyrics({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
+    return GetX<PlayerController>(builder: (controller) {
+      return Expanded(
+        child: Container(
+          color: bcolor.withOpacity(.2),
+          margin: const EdgeInsets.only(bottom: 10),
+          child: controller.lyricsLoading.value
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text(
+                        'Loading lyrics',
+                        style: xtitle,
+                      ),
+                    )
+                  ],
+                )
+              : controller.getLyricsValue.value.isNotEmpty
+                  ? Scrollbar(
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 10),
+                          child: Text(
+                            controller.getLyricsValue.value,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline_outlined,
+                          size: 60,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(14.0),
+                          child: Text(
+                            'Lyrics Not Found',
+                            style: xheading,
+                          ),
+                        )
+                      ],
+                    ),
+        ),
+      );
+    });
+  }
+}
+
 class ArtWork extends StatelessWidget {
   const ArtWork({
     Key? key,
@@ -363,25 +452,25 @@ class ArtWork extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: GetX<PlayerController>(
-        builder: (controller) {
-          return QueryArtworkWidget(
-            id: int.parse(controller.id.value),
-            quality: 100,
-            type: ArtworkType.AUDIO,
-            artworkHeight: 260,
-            artworkBorder: BorderRadius.zero,
-            artworkFit: BoxFit.contain,
-            nullArtworkWidget: Image.asset(
-              'lib/assets/art.png',
-              fit: BoxFit.contain,
-              height: 260,
-            ),
-          );
-        },
+    return Expanded(
+      child: Container(
+        child: GetX<PlayerController>(
+          builder: (controller) {
+            return QueryArtworkWidget(
+              id: int.parse(controller.id.value),
+              quality: 100,
+              type: ArtworkType.AUDIO,
+              artworkBorder: BorderRadius.zero,
+              artworkFit: BoxFit.contain,
+              nullArtworkWidget: Image.asset(
+                'lib/assets/art.png',
+                fit: BoxFit.contain,
+              ),
+            );
+          },
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 40),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 40),
     );
   }
 }
@@ -399,39 +488,32 @@ class PlaylistQueue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Text(
-              'Current Queue',
-              style: xtitle,
-            ),
-          ),
-          Expanded(
-            child: Scrollbar(
-              child: ListView.builder(
-                itemCount: (playerController.player.value.sequence ?? []).length,
-                itemBuilder: (context, int index) {
-                  MediaItem audio = playerController.getQueueAudio(playerController.currentQueueList[index]);
-                  return SongTile(
-                    startPlaylist: (int pos) async {
-                      await playAudios(pos);
-                    },
-                    audio: audio,
-                    index: playerController.currentQueueList[index],
-                    isLast: index + 1 ==
-                        (playerController.player.value.sequence ?? []).length,
-                  );
-                },
-              ),
-            ),
-          )
-        ],
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Current Queue'),
+        centerTitle: true,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: fcolor,
+        elevation: 0,
+      ),
+      body: Scrollbar(
+        child: ListView.builder(
+          itemCount: (playerController.player.value.sequence ?? []).length,
+          itemBuilder: (context, int index) {
+            MediaItem audio = playerController
+                .getQueueAudio(playerController.currentQueueList[index]);
+            return SongTile(
+              startPlaylist: (int pos) async {
+                await playAudios(pos);
+              },
+              audio: audio,
+              index: playerController.currentQueueList[index],
+              isLast: index + 1 ==
+                  (playerController.player.value.sequence ?? []).length,
+            );
+          },
+        ),
       ),
     );
   }

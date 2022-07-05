@@ -9,11 +9,13 @@ import 'package:get/get.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
 Future<void> main() async {
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      systemNavigationBarColor: Colors.transparent, // navigation bar color
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark // status bar color
-      ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent, // navigation bar color
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark // status bar color
+        ),
+  );
   await JustAudioBackground.init(
     androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
     androidNotificationChannelName: 'Audio playback',
@@ -38,8 +40,10 @@ class Aura extends StatelessWidget {
 
     return GetX<AppController>(builder: (controller) {
       return GetMaterialApp(
-        title: 'asurasounds',
+        title: 'aurasounds',
         theme: lightTheme(controller.appThemeColor.value),
+        darkTheme: darkTheme(controller.appThemeColor.value),
+        themeMode: controller.appThemeMode.value,
         debugShowCheckedModeBanner: false,
         home: NavHost(),
       );

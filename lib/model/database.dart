@@ -1,9 +1,10 @@
 import 'dart:io';
-
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+
+import 'native.dart';
 
 class DBModel {
   Future<Database> _initDB() async {
@@ -29,15 +30,16 @@ class DBModel {
 	"favourite"	INTEGER,
 	"date_added"	INTEGER,
 	"date_last_played"	INTEGER,
+	"lyrics"	TEXT,
+	"art_path"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
           ''');
-
-      print('table created');
     });
   }
 
   MediaItem _toMediaItem(Map<String, dynamic> info) {
+    // print(info['art_path']);
     return MediaItem(
         id: info['audio_id'].toString(),
         title: info['title'],
@@ -45,7 +47,12 @@ class DBModel {
         album: info['album'],
         playable: true,
         duration: Duration(milliseconds: info['duration']),
-        extras: {'uri': info['uri']});
+        artUri: Uri.parse(info['art_path']),
+        extras: {
+          'uri': info['uri'],
+          'favourite': info['favourite'],
+          'play_count': info['play_count'] ?? 0,
+        });
   }
 
   FolderModel _toFolderModel(Map<String, dynamic> info) {
@@ -64,6 +71,14 @@ class DBModel {
     return _sl.map((rs) => _toMediaItem(rs)).toList();
   }
 
+  Future<Map?> getFavourite(int songId) async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      'SELECT favourite FROM music WHERE audio_id=$songId',
+    );
+    return _sl.isNotEmpty ? _sl.first : null;
+  }
+
   Future<List<MediaItem>> getFolderSongs(
       String fl, String sv, String so) async {
     Database _database = await _initDB();
@@ -71,6 +86,23 @@ class DBModel {
       '''SELECT * FROM music WHERE folder_uri='$fl' ORDER BY $sv $so''',
     );
     return _sl.map((rs) => _toMediaItem(rs)).toList();
+  }
+
+  Future<void> setFavourite(int songId, int val) async {
+    Database _database = await _initDB();
+    int _sl = await _database.rawUpdate(
+      '''UPDATE music SET favourite=$val WHERE audio_id=$songId''',
+    );
+  }
+
+  Future<void> setPlayCount(int songId) async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      'SELECT play_count FROM music WHERE audio_id=$songId',
+    );
+    await _database.rawUpdate(
+      '''UPDATE music SET play_count=${(_sl.last['play_count'] ?? 0) + 1},date_last_played=${DateTime.now().millisecondsSinceEpoch} WHERE audio_id=$songId''',
+    );
   }
 
   Future<List<MediaItem>> getRecentlyPlayedSongs() async {
@@ -81,10 +113,18 @@ class DBModel {
     return _sl.map((rs) => _toMediaItem(rs)).toList();
   }
 
+  Future<List<MediaItem>> getMostlyPlayedSongs() async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT * FROM music ORDER BY play_count DESC''',
+    );
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
+  }
+
   Future<List<MediaItem>> getFavouriteSongs() async {
     Database _database = await _initDB();
     List<Map<String, dynamic>> _sl = await _database.rawQuery(
-      '''SELECT * FROM music  WHERE favourite =1 ORDER BY title DESC ''',
+      '''SELECT * FROM music  WHERE favourite =1 ORDER BY date_last_played DESC''',
     );
     return _sl.map((rs) => _toMediaItem(rs)).toList();
   }
@@ -129,6 +169,8 @@ class DBModel {
       String folderUri = directory.parent.path;
       String folder = directory.parent.path.split("/").last;
 
+      String artPath = ''; //await saveArtWork(id: song.id);
+
       // print(folder);
 
       if (_sl.isEmpty) {
@@ -146,8 +188,9 @@ class DBModel {
               folder_uri,
               folder,
               date_added,
-              size
-              ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)''', [
+              size,
+              art_path
+              ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', [
             song.id,
             song.artistId,
             song.albumId,
@@ -160,7 +203,8 @@ class DBModel {
             folderUri.replaceAll('/', '-'),
             folder,
             song.dateAdded,
-            song.size
+            song.size,
+            artPath
           ]);
         });
       } else {}

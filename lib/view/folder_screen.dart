@@ -1,10 +1,12 @@
 import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/view/components/all_folders.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 class FolderScreen extends StatelessWidget {
   FolderScreen({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
@@ -21,7 +23,7 @@ class FolderScreen extends StatelessWidget {
               child: Text(
                 'Folders',
                 style: xheading.copyWith(
-                  color: Colors.grey.shade600,
+                  color:fcolor.withOpacity(.7),
                   fontFamily: 'Cust',
                 ),
               ),

@@ -3,8 +3,8 @@ import 'package:aurasounds/controller/settings_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class UpdateLibrary extends StatelessWidget {
-  UpdateLibrary({Key? key}) : super(key: key);
+class NoSongs extends StatelessWidget {
+  const NoSongs({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +16,16 @@ class UpdateLibrary extends StatelessWidget {
           return Column(
             children: [
               const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Icon(
+                  Icons.error_outline_outlined,
+                  size: 60,
+                ),
+              ),
+              const Padding(
                 padding: EdgeInsets.only(top: 40, left: 30, right: 30),
                 child: Text(
-                  'Scan & load new songs into aurasounds song library from this devices\' storage',
+                  'No songs library, scan from this devices\' storage to proceed',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18),
                 ),
@@ -28,7 +35,11 @@ class UpdateLibrary extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 16),
                   child: controller.isLibrarySongs.value
                       ? const CircularProgressIndicator()
-                      : Container(),
+                      : GetX<PlayerController>(builder: (pcontroller) {
+                          return pcontroller.noOfAllSongs.value > 0
+                              ? Container()
+                              : Container();
+                        }),
                 ),
               ),
               Padding(
@@ -36,7 +47,7 @@ class UpdateLibrary extends StatelessWidget {
                     const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
                 child: !controller.isLibrarySongs.value
                     ? ElevatedButton(
-                        child: const Text('Scan & Update Library'),
+                        child: const Text('Scan'),
                         onPressed: () {
                           settingsController.updateLibrary().then((value) {
                             playerController.initSongs();

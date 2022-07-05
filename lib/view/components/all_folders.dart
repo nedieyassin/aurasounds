@@ -30,8 +30,9 @@ class AllFoldersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
     return Container(
-      color: Colors.white,
+      color: bcolor,
       child: Scrollbar(
         child: GetX<PlayerController>(
           builder: (controller) {
@@ -67,6 +68,7 @@ class FolderSongsBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
@@ -108,7 +110,7 @@ class FolderSongsBottomSheet extends StatelessWidget {
             ),
             Expanded(
               child: Container(
-                color: Colors.white,
+                color: bcolor,
                 child: Scrollbar(
                   child: GetX<PlayerController>(
                     builder: (controller) {

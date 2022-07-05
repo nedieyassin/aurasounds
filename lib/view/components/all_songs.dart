@@ -4,7 +4,6 @@ import 'package:aurasounds/view/components/song_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import 'package:on_audio_query/on_audio_query.dart';
 
 class AllSongsPage extends StatelessWidget {
   AllSongsPage({Key? key}) : super(key: key);
@@ -13,11 +12,15 @@ class AllSongsPage extends StatelessWidget {
 
   Future<void> playAudios(int position) async {
     await playerController.startPlaylist(
-        position: position, playlist: 'allsongs');
+      position: position,
+      playlist: 'allsongs',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
+    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
     return Column(
       children: [
         Row(
@@ -58,7 +61,7 @@ class AllSongsPage extends StatelessWidget {
         ),
         Expanded(
           child: Container(
-            color: Colors.white,
+            color: bcolor,
             child: Scrollbar(
               child: GetX<PlayerController>(
                 builder: (controller) {
