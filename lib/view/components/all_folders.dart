@@ -3,12 +3,10 @@ import 'package:aurasounds/model/database.dart';
 import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/view/components/folder_tile.dart';
 import 'package:aurasounds/view/components/song_tile.dart';
-import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:on_audio_query/on_audio_query.dart';
 
 class AllFoldersPage extends StatelessWidget {
   AllFoldersPage({Key? key}) : super(key: key);
@@ -36,18 +34,38 @@ class AllFoldersPage extends StatelessWidget {
       child: Scrollbar(
         child: GetX<PlayerController>(
           builder: (controller) {
-            return ListView.builder(
-                itemCount: controller.noOfAllFolders.value,
-                itemBuilder: (BuildContext context, int index) {
-                  FolderModel folder = controller.getFolder(index);
-                  return FolderTile(
-                    isLast: index + 1 == controller.noOfAllFolders.value,
-                    folder: folder,
-                    folderSongs: () {
-                      openFolderSongs(context);
-                    },
+            return controller.noOfAllFolders.value > 0
+                ? ListView.builder(
+                    itemCount: controller.noOfAllFolders.value,
+                    itemBuilder: (BuildContext context, int index) {
+                      FolderModel folder = controller.getFolder(index);
+                      return FolderTile(
+                        isLast: index + 1 == controller.noOfAllFolders.value,
+                        folder: folder,
+                        folderSongs: () {
+                          openFolderSongs(context);
+                        },
+                      );
+                    })
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Icon(
+                        Icons.error_outline_outlined,
+                        size: 60,
+                      ),
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(14.0),
+                          child: Text(
+                            'No Folders',
+                            style: xheading,
+                          ),
+                        ),
+                      )
+                    ],
                   );
-                });
           },
         ),
       ),
@@ -79,7 +97,7 @@ class FolderSongsBottomSheet extends StatelessWidget {
               builder: (controller) {
                 return ListTile(
                   leading: IconButton(
-                    icon: const Icon(EvaIcons.arrowBack),
+                    icon: const Icon(Icons.arrow_back),
                     onPressed: () {
                       Get.back();
                     },
@@ -95,9 +113,9 @@ class FolderSongsBottomSheet extends StatelessWidget {
                       underline: Container(),
                       items: controller.sortType
                           .map((item) => DropdownMenuItem(
-                        value: item['value'] as String,
-                        child: Text(item['label']),
-                      ))
+                                value: item['value'] as String,
+                                child: Text(item['label']),
+                              ))
                           .toList(),
                       value: controller.sortValue.value,
                       onChanged: (String? value) {

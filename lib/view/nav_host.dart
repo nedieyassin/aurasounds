@@ -8,11 +8,9 @@ import 'package:aurasounds/view/home_screen.dart';
 import 'package:aurasounds/view/library_screen.dart';
 import 'package:aurasounds/view/playing_screen.dart';
 import 'package:aurasounds/view/settings_screen.dart';
-import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:line_icons/line_icons.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
@@ -58,76 +56,104 @@ class NavHost extends StatelessWidget {
                               : Container();
                         }),
                         Container(
-                          height: 72,
+                          height: 80,
                           width: MediaQuery.of(context).size.width,
                           color: bcolor.withOpacity(.2),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              IconButton(
-                                tooltip: 'Home',
-                                icon: Icon(
-                                  LineIcons.headphones,
-                                  color: controller.currentIndex.value == 0
-                                      ? Theme.of(context).primaryColor
-                                      : fcolor.withOpacity(.7),
-                                  size: 28,
-                                ),
-                                onPressed: () {
-                                  if (controller.currentIndex.value != 0) {
-                                    navController.navigateTo(0);
-                                    scrollTo(0);
-                                  }
-                                },
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Home',
+                                    splashColor: Colors.transparent,
+                                    icon: Icon(
+                                      Icons.headphones_rounded,
+                                      color: controller.currentIndex.value == 0
+                                          ? Theme.of(context).primaryColor
+                                          : fcolor.withOpacity(.7),
+                                      size: 28,
+                                    ),
+                                    onPressed: () {
+                                      if (controller.currentIndex.value != 0) {
+                                        navController.navigateTo(0);
+                                        scrollTo(0);
+                                      }
+                                    },
+                                  ),
+                                  const Text('Home')
+                                ],
                               ),
-                              IconButton(
-                                tooltip: 'Library',
-                                icon: Icon(
-                                  EvaIcons.listOutline,
-                                  color: controller.currentIndex.value == 1
-                                      ? Theme.of(context).primaryColor
-                                      : fcolor.withOpacity(.7),
-                                  size: 28,
-                                ),
-                                onPressed: () {
-                                  if (controller.currentIndex.value != 1) {
-                                    navController.navigateTo(1);
-                                    scrollTo(1);
-                                  }
-                                },
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Library',
+                                    splashColor: Colors.transparent,
+                                    icon: Icon(
+                                      Icons.queue_music_outlined,
+                                      color: controller.currentIndex.value == 1
+                                          ? Theme.of(context).primaryColor
+                                          : fcolor.withOpacity(.7),
+                                      size: 28,
+                                    ),
+                                    onPressed: () {
+                                      if (controller.currentIndex.value != 1) {
+                                        navController.navigateTo(1);
+                                        scrollTo(1);
+                                      }
+                                    },
+                                  ),
+                                  const Text('Library')
+                                ],
                               ),
-                              IconButton(
-                                tooltip: 'Folders',
-                                icon: Icon(
-                                  EvaIcons.folderOutline,
-                                  color: controller.currentIndex.value == 2
-                                      ? Theme.of(context).primaryColor
-                                      : fcolor.withOpacity(.7),
-                                  size: 28,
-                                ),
-                                onPressed: () {
-                                  if (controller.currentIndex.value != 2) {
-                                    navController.navigateTo(2);
-                                    scrollTo(2);
-                                  }
-                                },
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Folders',
+                                    splashColor: Colors.transparent,
+                                    icon: Icon(
+                                      Icons.folder_rounded,
+                                      color: controller.currentIndex.value == 2
+                                          ? Theme.of(context).primaryColor
+                                          : fcolor.withOpacity(.7),
+                                      size: 28,
+                                    ),
+                                    onPressed: () {
+                                      if (controller.currentIndex.value != 2) {
+                                        navController.navigateTo(2);
+                                        scrollTo(2);
+                                      }
+                                    },
+                                  ),
+                                  const Text('Folders')
+                                ],
                               ),
-                              IconButton(
-                                tooltip: 'Settings',
-                                icon: Icon(
-                                  EvaIcons.settings2Outline,
-                                  color: controller.currentIndex.value == 3
-                                      ? Theme.of(context).primaryColor
-                                      : fcolor.withOpacity(.7),
-                                  size: 28,
-                                ),
-                                onPressed: () {
-                                  if (controller.currentIndex.value != 3) {
-                                    navController.navigateTo(3);
-                                    scrollTo(3);
-                                  }
-                                },
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Settings',
+                                    splashColor: Colors.transparent,
+                                    icon: Icon(
+                                      Icons.settings,
+                                      color: controller.currentIndex.value == 3
+                                          ? Theme.of(context).primaryColor
+                                          : fcolor.withOpacity(.7),
+                                      size: 28,
+                                    ),
+                                    onPressed: () {
+                                      if (controller.currentIndex.value != 3) {
+                                        navController.navigateTo(3);
+                                        scrollTo(3);
+                                      }
+                                    },
+                                  ),
+                                  const Text('Settings',)
+                                ],
                               ),
                             ],
                           ),

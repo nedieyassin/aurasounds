@@ -1,7 +1,6 @@
 import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/view/components/song_tile.dart';
-import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -34,7 +33,7 @@ class SearchWidget extends StatelessWidget {
             SizedBox(
               width: 10,
             ),
-            Icon(EvaIcons.search),
+            Icon(Icons.search),
           ],
         ),
         onPressed: () {

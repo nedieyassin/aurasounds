@@ -4,7 +4,6 @@ import 'package:aurasounds/view/components/change_theme.dart';
 import 'package:aurasounds/view/components/developers.dart';
 import 'package:aurasounds/view/components/terms.dart';
 import 'package:aurasounds/view/components/update_library.dart';
-import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -37,7 +36,7 @@ class SettingsScreen extends StatelessWidget {
               height: 30,
             ),
             XListTile(
-              icon: EvaIcons.loaderOutline,
+              icon: Icons.queue_music_rounded,
               title: 'Update Song Library',
               intro: 'Load new songs into aurasounds\'s song database',
               buttonText: 'Update Library',
@@ -52,7 +51,7 @@ class SettingsScreen extends StatelessWidget {
               focus: true,
             ),
             XListTile(
-              icon: EvaIcons.colorPaletteOutline,
+              icon: Icons.color_lens_rounded,
               title: 'Change Accent Colour',
               intro: 'Customise aurasounds to look as you wish',
               buttonText: 'Change Theme',
@@ -66,7 +65,7 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
             XListTile(
-              icon: EvaIcons.gridOutline,
+              icon: Icons.grid_view_rounded,
               title: 'Terms of Use',
               intro:
                   'The app is copyrighted to its developers, it should not be sold or cloned',
@@ -81,7 +80,7 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
             XListTile(
-              icon: EvaIcons.infoOutline,
+              icon:Icons.info_outline_rounded,
               title: 'About aurasounds',
               intro:
                   'Aurasounds is a feature rich music player made by music lover for music lovers.',
@@ -96,7 +95,7 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
             XListTile(
-              icon: EvaIcons.personOutline,
+              icon: Icons.business,
               title: 'Developers',
               intro: 'This app is developed and maintained by strollec',
               buttonText: 'View Details',

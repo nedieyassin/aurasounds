@@ -19,7 +19,7 @@ class NoSongs extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Icon(
                   Icons.error_outline_outlined,
-                  size: 60,
+                  size: 90,
                 ),
               ),
               const Padding(
@@ -37,39 +37,68 @@ class NoSongs extends StatelessWidget {
                       ? const CircularProgressIndicator()
                       : GetX<PlayerController>(builder: (pcontroller) {
                           return pcontroller.noOfAllSongs.value > 0
-                              ? Container()
+                              ? Container(
+                                  child: ElevatedButton(
+                                    child: const Text('Proceed'),
+                                    onPressed: () {
+                                      Get.back();
+                                    },
+                                    style: ButtonStyle(
+                                      backgroundColor:
+                                          MaterialStateProperty.all(
+                                              Theme.of(context).primaryColor),
+                                      padding: MaterialStateProperty.all(
+                                        const EdgeInsets.symmetric(
+                                            vertical: 12, horizontal: 20),
+                                      ),
+                                      shape: MaterialStateProperty.all(
+                                        RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      elevation: MaterialStateProperty.all(0),
+                                    ),
+                                  ),
+                                )
                               : Container();
                         }),
                 ),
               ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
-                child: !controller.isLibrarySongs.value
-                    ? ElevatedButton(
-                        child: const Text('Scan'),
-                        onPressed: () {
-                          settingsController.updateLibrary().then((value) {
-                            playerController.initSongs();
-                          });
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all(
-                              Theme.of(context).primaryColor),
-                          padding: MaterialStateProperty.all(
-                            const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 20),
-                          ),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          elevation: MaterialStateProperty.all(0),
-                        ),
+              GetX<PlayerController>(builder: (pcontroller) {
+                return pcontroller.noOfAllSongs.value < 1
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 28, horizontal: 24),
+                        child: !controller.isLibrarySongs.value
+                            ? ElevatedButton(
+                                child: const Text('Scan'),
+                                onPressed: () {
+                                  settingsController
+                                      .updateLibrary()
+                                      .then((value) {
+                                    playerController.initSongs();
+                                  });
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all(
+                                      Theme.of(context).primaryColor),
+                                  padding: MaterialStateProperty.all(
+                                    const EdgeInsets.symmetric(
+                                        vertical: 12, horizontal: 20),
+                                  ),
+                                  shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  elevation: MaterialStateProperty.all(0),
+                                ),
+                              )
+                            : Container(),
                       )
-                    : Container(),
-              ),
+                    : Container();
+              }),
             ],
           );
         },

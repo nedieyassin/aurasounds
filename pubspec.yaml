@@ -30,7 +30,7 @@ dependencies:
   get: 4.6.1
   sqflite: 2.0.2
   on_audio_query: ^2.6.0
-  eva_icons_flutter: ^3.0.2
+#  eva_icons_flutter: ^3.0.2
   just_audio: ^0.9.24
   just_audio_background: ^0.0.1-beta.5
   audio_session: ^0.1.7

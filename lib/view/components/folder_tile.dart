@@ -1,6 +1,5 @@
 import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/model/database.dart';
-import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -31,7 +30,7 @@ class FolderTile extends StatelessWidget {
           folderSongs();
           playerController.setFolder(folder.folder, folder.folderUri);
         },
-        leading: const Icon(EvaIcons.folderOutline,size: 26,),
+        leading: const Icon(Icons.folder,size: 26,),
         title: Text(
           folder.folder,
           maxLines: 1,

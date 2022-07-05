@@ -65,19 +65,40 @@ class AllSongsPage extends StatelessWidget {
             child: Scrollbar(
               child: GetX<PlayerController>(
                 builder: (controller) {
-                  return ListView.builder(
-                      itemCount: controller.noOfAllSongs.value,
-                      itemBuilder: (BuildContext context, int index) {
-                        MediaItem audio = controller.getAudio(index);
-                        return SongTile(
-                          startPlaylist: (int pos) async {
-                            await playAudios(pos);
-                          },
-                          audio: audio,
-                          index: index,
-                          isLast: index + 1 == controller.noOfAllSongs.value,
+                  return controller.noOfAllSongs.value > 0
+                      ? ListView.builder(
+                          itemCount: controller.noOfAllSongs.value,
+                          itemBuilder: (BuildContext context, int index) {
+                            MediaItem audio = controller.getAudio(index);
+                            return SongTile(
+                              startPlaylist: (int pos) async {
+                                await playAudios(pos);
+                              },
+                              audio: audio,
+                              index: index,
+                              isLast:
+                                  index + 1 == controller.noOfAllSongs.value,
+                            );
+                          })
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Icon(
+                              Icons.error_outline_outlined,
+                              size: 60,
+                            ),
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(14.0),
+                                child: Text(
+                                  'No Songs',
+                                  style: xheading,
+                                ),
+                              ),
+                            )
+                          ],
                         );
-                      });
                 },
               ),
             ),

@@ -67,7 +67,7 @@ class Developers extends StatelessWidget {
           ListTile(
             onTap: () async {
               await launchUrl(
-                Uri.parse('mailto://info@strolltec.com'),
+                Uri.parse('mailto:info@strolltec.com'),
                 mode: LaunchMode.externalApplication,
               );
             },
