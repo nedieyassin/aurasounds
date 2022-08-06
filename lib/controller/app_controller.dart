@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 
 class AppController extends GetxController {
   var appThemeColor = Colors.pink.obs;
@@ -9,9 +9,10 @@ class AppController extends GetxController {
   var appThemeColorText = 'pink'.obs;
 
   initColor() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String theme = prefs.getString('app_theme') ?? 'pink';
-    String themeMode = prefs.getString('app_theme_mode') ?? 'system';
+    String theme = Hive.box('app').get('app_theme', defaultValue: 'pink');
+    String themeMode = Hive.box('app').get('app_theme_mode',
+        defaultValue:
+            'system'); // prefs.getString('app_theme_mode') ?? 'system';
     changeTheme(theme);
     changeThemeMode(themeMode);
   }
@@ -63,18 +64,14 @@ class AppController extends GetxController {
   }
 
   Future<void> changeTheme(String color) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     appThemeColor.value = getColor(color);
     appThemeColorText.value = color;
-    prefs.setString('app_theme', color);
+    Hive.box('app').put('app_theme', color);
   }
 
   Future<void> changeThemeMode(String color) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     appThemeMode.value = getThemeMode(color);
     appThemeModeText.value = color;
-    prefs.setString('app_theme_mode', color);
+    Hive.box('app').put('app_theme_mode', color);
   }
-
-
 }

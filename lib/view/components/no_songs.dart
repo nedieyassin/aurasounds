@@ -1,3 +1,4 @@
+import 'package:aurasounds/controller/library_controller.dart';
 import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/controller/settings_controller.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ class NoSongs extends StatelessWidget {
   Widget build(BuildContext context) {
     var settingsController = Get.put(SettingsController());
     var playerController = Get.find<PlayerController>();
+    var libraryController = Get.find<LibraryController>();
     return SafeArea(
       child: GetX<SettingsController>(
         builder: (controller) {
@@ -36,7 +38,7 @@ class NoSongs extends StatelessWidget {
                   child: controller.isLibrarySongs.value
                       ? const CircularProgressIndicator()
                       : GetX<PlayerController>(builder: (pcontroller) {
-                          return pcontroller.noOfAllSongs.value > 0
+                          return libraryController.allSongs.value.isNotEmpty
                               ? Container(
                                   child: ElevatedButton(
                                     child: const Text('Proceed'),
@@ -66,7 +68,7 @@ class NoSongs extends StatelessWidget {
                 ),
               ),
               GetX<PlayerController>(builder: (pcontroller) {
-                return pcontroller.noOfAllSongs.value < 1
+                return libraryController.allSongs.value.isEmpty
                     ? Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 28, horizontal: 24),
@@ -77,7 +79,7 @@ class NoSongs extends StatelessWidget {
                                   settingsController
                                       .updateLibrary()
                                       .then((value) {
-                                    playerController.initSongs();
+                                    libraryController.initSongs();
                                   });
                                 },
                                 style: ButtonStyle(

@@ -1,42 +1,22 @@
 import 'dart:typed_data';
 import 'package:aurasounds/model/database.dart';
 import 'package:aurasounds/model/lyrics.dart';
-import 'package:aurasounds/view/components/no_songs.dart';
-import 'package:aurasounds/view/settings_screen.dart';
+import 'package:aurasounds/utils/helpers.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class PlayerController extends GetxController {
   final OnAudioQuery _audioQuery = OnAudioQuery();
   final DBModel _db = DBModel();
-  RxList<MediaItem> songList = <MediaItem>[].obs;
-  RxList<MediaItem> folderSongList = <MediaItem>[].obs;
-  RxList<MediaItem> recentlyPlayedSongList = <MediaItem>[].obs;
-  RxList<MediaItem> mostlyPlayedSongList = <MediaItem>[].obs;
-  RxList<MediaItem> favSongList = <MediaItem>[].obs;
-  RxList<MediaItem> searchSongList = <MediaItem>[].obs;
-  RxList<int> currentQueueList = <int>[].obs;
-  RxList<FolderModel> folderList = <FolderModel>[].obs;
-
-  RxInt noOfAllSongs = 0.obs;
-  RxInt noOfAllFolders = 0.obs;
-  RxInt noOfFolderSongs = 0.obs;
-  RxInt noOfSearchSongs = 0.obs;
-  RxInt noOfRecentlyPlayedSongs = 0.obs;
-  RxInt noOfMostlyPlayedSongs = 0.obs;
-  RxInt noOfFavSongs = 0.obs;
-
   Rx<AudioPlayer> player = AudioPlayer().obs;
+
+  RxList<int> currentQueueList = <int>[].obs;
   RxInt getCurrentAudioIndex = 0.obs;
   RxInt getCurrentAudioId = 0.obs;
-
   RxString getCurrentPlaylistValue = ''.obs;
-  RxString getCurrentSearchTextValue = ''.obs;
-
-  RxString getCurrentFolderText = ''.obs;
-  RxString getCurrentFolderValue = ''.obs;
 
   RxString getLyricsValue = ''.obs;
   RxBool openLyrics = false.obs;
@@ -48,37 +28,7 @@ class PlayerController extends GetxController {
   RxBool shuffle = false.obs;
   RxBool hasCurrent = false.obs;
   RxBool isFavourite = true.obs;
-
-  final RxList<Map> sortType = [
-    {
-      'label': 'Date Added - Desc',
-      'value': 'date_added.DESC',
-    },
-    {
-      'label': 'Date Added - Asc',
-      'value': 'date_added.ASC',
-    },
-    {
-      'label': 'Title - Desc',
-      'value': 'title.DESC',
-    },
-    {
-      'label': 'Title - Asc',
-      'value': 'title.ASC',
-    },
-    {
-      'label': 'Artist - Desc',
-      'value': 'artist.DESC',
-    },
-    {
-      'label': 'Artist - Asc',
-      'value': 'artist.ASC',
-    },
-  ].obs;
-
-  RxString sortValue = 'date_added.DESC'.obs;
-
-  // RxString tabValue = 'allsongs'.obs;
+  RxBool isRadio = false.obs;
 
   RxString id = ''.obs;
   RxString title = ''.obs;
@@ -90,72 +40,28 @@ class PlayerController extends GetxController {
     return meta.isNotEmpty ? meta : '<unknown>';
   }
 
-  MediaItem getAudio(int index) {
-    return songList[index];
-  }
-
   MediaItem getQueueAudio(int index) {
     return player.value.sequence![index].tag as MediaItem;
   }
 
-  MediaItem getRecentlyPlayedAudio(int index) {
-    return recentlyPlayedSongList[index];
-  }
-
-  MediaItem getMostlyPlayedAudio(int index) {
-    return mostlyPlayedSongList[index];
-  }
-
-  MediaItem getSearchAudio(int index) {
-    return searchSongList[index];
-  }
-
-  MediaItem getFavAudio(int index) {
-    return favSongList[index];
-  }
-
-  MediaItem getFolderAudio(int index) {
-    return folderSongList[index];
-  }
-
-  FolderModel getFolder(int index) {
-    return folderList[index];
-  }
-
-  List<MediaItem> getAudios() {
-    return songList;
-  }
-
   getArtByteArray() async {
-    Uint8List? _artByteArray = await _audioQuery.queryArtwork(
-      getCurrentAudioId.value,
-      ArtworkType.AUDIO,
-    );
-
-    if (_artByteArray!.isNotEmpty) {
-      artByteArray.value = _artByteArray;
-      hasArtByteArray.value = true;
+    if (!isRadio.value) {
+      Uint8List? _artByteArray = await _audioQuery.queryArtwork(
+        getCurrentAudioId.value,
+        ArtworkType.AUDIO,
+      );
+      if (_artByteArray != null && _artByteArray.isNotEmpty) {
+        artByteArray.value = _artByteArray;
+      } else {
+        ByteData bytes =
+            await rootBundle.load('lib/assets/${getThemedAsset('cover.png')}');
+        artByteArray.value = bytes.buffer.asUint8List();
+      }
     } else {
-      hasArtByteArray.value = false;
+      ByteData bytes =
+          await rootBundle.load('lib/assets/${getThemedAsset('cover.png')}');
+      artByteArray.value = bytes.buffer.asUint8List();
     }
-  }
-
-  void setSortOrder(String sort) {
-    sortValue.value = sort;
-    getCurrentPlaylistValue.value = '';
-    _initGetAllSongs();
-    _initGetFolderSongs();
-  }
-
-  void setFolder(String text, String value) {
-    getCurrentFolderText.value = text;
-    getCurrentFolderValue.value = value;
-    _initGetFolderSongs();
-  }
-
-  void resetFolder() {
-    getCurrentFolderText.value = '';
-    getCurrentFolderValue.value = '';
   }
 
   void toggleMiniLyrics() {
@@ -175,14 +81,22 @@ class PlayerController extends GetxController {
 
   void _listenForChangesInSequenceState() {
     player.value.sequenceStateStream.listen((sequenceState) {
-      if (sequenceState == null) return;
+      if (sequenceState == null) {
+        hasCurrent.value = false;
+        return;
+      }
+      if (sequenceState.currentSource == null) {
+        hasCurrent.value = false;
+        return;
+      }
       MediaItem meta = sequenceState.currentSource!.tag as MediaItem;
       id.value = meta.id;
       getCurrentAudioId.value = int.parse(meta.id);
       title.value = meta.title;
-      artist.value = meta.artist!;
+      artist.value = meta.artist ?? '';
       album.value = meta.album!;
       duration.value = meta.duration!;
+      isRadio.value = meta.extras!['is_radio'] ?? false;
       if (openLyrics.value) {
         getLyrics();
       }
@@ -194,13 +108,7 @@ class PlayerController extends GetxController {
         hasCurrent.value = false;
       }
     });
-    // player.value.
-  }
 
-  @override
-  void onInit() {
-    super.onInit();
-    initSongs();
     player.value.currentIndexStream.listen((event) {
       updateCurrentAudioId();
       _updateFavourite();
@@ -212,31 +120,36 @@ class PlayerController extends GetxController {
     });
   }
 
-  void initSongs() {
-    _initGetAllSongs(open: false);
-    _initGetAllFolders();
-    _initGetRecentlyPlayedSongs();
-    _initGetMostlyPlayedSongs();
+  @override
+  void onInit() {
+    super.onInit();
     _listenForChangesInSequenceState();
-    _initGetFavSongs();
   }
 
-  Future<void> toggleShuffle() async {
-    final enable = !player.value.shuffleModeEnabled;
-    if (enable) {
-      await player.value.shuffle();
+  Future<void> toggleShuffle({shuffle = false}) async {
+    if (shuffle) {
+      if (shuffle) {
+        await player.value.shuffle();
+      }
+      await player.value.setShuffleModeEnabled(shuffle);
+    } else {
+      final enable = !player.value.shuffleModeEnabled;
+      if (enable) {
+        await player.value.shuffle();
+      }
+      await player.value.setShuffleModeEnabled(enable);
     }
-    await player.value.setShuffleModeEnabled(enable);
   }
 
   Future<void> toggleFavourite() async {
     await _db.setFavourite(getCurrentAudioId.value, isFavourite.value ? 0 : 1);
     await _updateFavourite();
-    _initGetFavSongs();
   }
 
   Future<void> _updatePlayCount() async {
     if (!hasCurrent.value) return;
+    if (isRadio.value) return;
+    if (getCurrentPlaylistValue.value == 'radio') return;
     int nowId = getCurrentAudioId.value;
     Future.delayed(
       Duration(
@@ -245,8 +158,6 @@ class PlayerController extends GetxController {
     );
     if (nowId == getCurrentAudioId.value) {
       await _db.setPlayCount(getCurrentAudioId.value);
-      _initGetMostlyPlayedSongs();
-      _initGetRecentlyPlayedSongs();
     }
   }
 
@@ -270,26 +181,6 @@ class PlayerController extends GetxController {
     getArtByteArray();
   }
 
-  Future<void> _initGetAllSongs({open = false}) async {
-    noOfAllSongs.value = 0;
-    songList.value = await _db.getAllSongs(
-      sortValue.value.split('.').first,
-      sortValue.value.split('.').last,
-    );
-    noOfAllSongs.value = songList.value.length;
-    if (songList.value.isEmpty) {
-      Get.to(
-        () => const FullPage(
-          title: 'Scan for songs',
-          body: NoSongs(),
-        ),
-      );
-    }
-    if (open) {
-      openPlaylist(songList.value);
-    }
-  }
-
   Future<void> _updateFavourite() async {
     Map? _fav = await _db.getFavourite(getCurrentAudioId.value);
     if (_fav == null) {
@@ -297,50 +188,6 @@ class PlayerController extends GetxController {
       return;
     }
     isFavourite.value = _fav['favourite'] == 1 ? true : false;
-  }
-
-  Future<void> _initGetFolderSongs() async {
-    if (getCurrentFolderValue.value.isEmpty) return;
-    noOfFolderSongs.value = 0;
-    folderSongList.value = await _db.getFolderSongs(
-      getCurrentFolderValue.value,
-      sortValue.value.split('.').first,
-      sortValue.value.split('.').last,
-    );
-    noOfFolderSongs.value = folderSongList.value.length;
-  }
-
-  Future<void> _initGetRecentlyPlayedSongs() async {
-    noOfRecentlyPlayedSongs.value = 0;
-    recentlyPlayedSongList.value = await _db.getRecentlyPlayedSongs();
-    noOfRecentlyPlayedSongs.value = recentlyPlayedSongList.value.length;
-  }
-
-  Future<void> _initGetMostlyPlayedSongs() async {
-    noOfMostlyPlayedSongs.value = 0;
-    mostlyPlayedSongList.value = await _db.getMostlyPlayedSongs();
-    noOfMostlyPlayedSongs.value = mostlyPlayedSongList.value.length;
-  }
-
-  Future<void> _initGetFavSongs() async {
-    noOfFavSongs.value = 0;
-    favSongList.value = await _db.getFavouriteSongs();
-    noOfFavSongs.value = favSongList.value.length;
-  }
-
-  Future<void> searchSongs(String q) async {
-    noOfSearchSongs.value = 0;
-    getCurrentSearchTextValue.value = q;
-    if (q.isEmpty) return;
-    getCurrentPlaylistValue.value = '';
-    searchSongList.value = await _db.searchSongs(q);
-    noOfSearchSongs.value = searchSongList.value.length;
-  }
-
-  Future<void> _initGetAllFolders() async {
-    noOfAllFolders.value = 0;
-    folderList.value = await _db.getAllSongFolders();
-    noOfAllFolders.value = folderList.value.length;
   }
 
   Future<void> _shuffledIndices() async {
@@ -354,50 +201,58 @@ class PlayerController extends GetxController {
     }
   }
 
-  Future<void> openPlaylist(List<MediaItem> playlist) async {
+  Future<void> openPlaylist(List<MediaItem> music) async {
     await player.value.setAudioSource(
       ConcatenatingAudioSource(
         useLazyPreparation: true,
-        children: playlist
-            .map(
-              (MediaItem audio) => AudioSource.uri(
+        children: music.map(
+          (MediaItem audio) {
+            if (audio.extras!['is_radio'] != null &&
+                audio.extras!['is_radio'] as bool) {
+              return AudioSource.uri(
                 Uri.parse(audio.extras!['uri']),
                 tag: audio,
-              ),
-            )
-            .toList(),
+              );
+            } else {
+              return AudioSource.uri(
+                Uri.parse(audio.extras!['uri']),
+                tag: audio.copyWith(
+                  artUri: Uri.file(audio.extras!['art_path']),
+                ),
+              );
+            }
+          },
+        ).toList(),
       ),
     );
     await _shuffledIndices();
   }
 
-  Future<void> startPlaylist({position = 0, required String playlist}) async {
-    if (getCurrentPlaylistValue.value != playlist) {
-      if (playlist == 'allsongs') {
-        await openPlaylist(songList);
-        getCurrentPlaylistValue.value = playlist;
-      } else if (playlist.contains('foldersongs')) {
-        await openPlaylist(folderSongList);
-        getCurrentPlaylistValue.value = playlist;
-      } else if (playlist.contains('search')) {
-        await openPlaylist(searchSongList);
-        getCurrentPlaylistValue.value = playlist;
-      } else if (playlist.contains('favourite')) {
-        await openPlaylist(favSongList);
-        getCurrentPlaylistValue.value = playlist;
-      } else if (playlist.contains('recentplayed')) {
-        await openPlaylist(recentlyPlayedSongList);
-        getCurrentPlaylistValue.value = playlist;
-      } else if (playlist.contains('mostplayed')) {
-        await openPlaylist(mostlyPlayedSongList);
+  Future<void> startPlaylist({
+    required String playlist,
+    required List<MediaItem> music,
+    falseOpen = false,
+    position = 0,
+    shuffle = false,
+  }) async {
+    if (music.isNotEmpty) {
+      if (getCurrentPlaylistValue.value != playlist || falseOpen) {
+        await openPlaylist(music);
         getCurrentPlaylistValue.value = playlist;
       }
+      if (shuffle) {
+        toggleShuffle(
+          shuffle: shuffle,
+        );
+      }
+      print(position);
+      await player.value.seek(const Duration(seconds: 0), index: position);
+      await player.value.play();
+      getCurrentAudioIndex.value = position;
+      if (playlist != 'radio') {
+        _updatePlayCount();
+      }
     }
-
-    await player.value.seek(const Duration(seconds: 0), index: position);
-    await player.value.play();
-    getCurrentAudioIndex.value = position;
-    _updatePlayCount();
   }
 
   Future<void> playQueueAt({position = 0}) async {

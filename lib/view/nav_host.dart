@@ -3,14 +3,17 @@ import 'package:aurasounds/controller/nav_controller.dart';
 import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/utils/helpers.dart';
-import 'package:aurasounds/view/folder_screen.dart';
-import 'package:aurasounds/view/home_screen.dart';
-import 'package:aurasounds/view/library_screen.dart';
-import 'package:aurasounds/view/playing_screen.dart';
-import 'package:aurasounds/view/settings_screen.dart';
+import 'package:aurasounds/view/components/mini_player.dart';
+import 'package:aurasounds/view/screens/home_screen.dart';
+import 'package:aurasounds/view/screens/library_screen.dart';
+import 'package:aurasounds/view/screens/playing_screen.dart';
+import 'package:aurasounds/view/screens/settings_screen.dart';
+import 'package:aurasounds/view/screens/youtube_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:line_icons/line_icons.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
@@ -25,6 +28,7 @@ class NavHost extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           PageView(
@@ -32,11 +36,10 @@ class NavHost extends StatelessWidget {
             onPageChanged: (int index) {
               navController.navigateTo(index);
             },
-            children: <Widget>[
-              const HomeScreen(),
+            children: const <Widget>[
+              HomeScreen(),
               LibraryScreen(),
-              FolderScreen(),
-              const SettingsScreen(),
+              YoutubeScreen(),
             ],
           ),
           GetX<NavController>(
@@ -113,10 +116,10 @@ class NavHost extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   IconButton(
-                                    tooltip: 'Folders',
+                                    tooltip: 'Youtube',
                                     splashColor: Colors.transparent,
                                     icon: Icon(
-                                      Icons.folder_rounded,
+                                      LineIcons.youtube,
                                       color: controller.currentIndex.value == 2
                                           ? Theme.of(context).primaryColor
                                           : fcolor.withOpacity(.7),
@@ -129,30 +132,31 @@ class NavHost extends StatelessWidget {
                                       }
                                     },
                                   ),
-                                  const Text('Folders')
+                                  const Text('Youtube Music')
                                 ],
                               ),
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   IconButton(
-                                    tooltip: 'Settings',
+                                    tooltip: 'Youtube',
                                     splashColor: Colors.transparent,
                                     icon: Icon(
                                       Icons.settings,
-                                      color: controller.currentIndex.value == 3
-                                          ? Theme.of(context).primaryColor
-                                          : fcolor.withOpacity(.7),
+                                      color: fcolor.withOpacity(.7),
                                       size: 28,
                                     ),
                                     onPressed: () {
-                                      if (controller.currentIndex.value != 3) {
-                                        navController.navigateTo(3);
-                                        scrollTo(3);
-                                      }
+                                      // if (controller.currentIndex.value != 3) {
+                                      //   navController.navigateTo(3);
+                                      //   scrollTo(3);
+                                      // }
+                                      Get.to(const SettingsScreen());
                                     },
                                   ),
-                                  const Text('Settings',)
+                                  const Text(
+                                    'Settings',
+                                  )
                                 ],
                               ),
                             ],
@@ -171,107 +175,3 @@ class NavHost extends StatelessWidget {
   }
 }
 
-class MiniPlayer extends StatelessWidget {
-  const MiniPlayer({
-    Key? key,
-  }) : super(key: key);
-
-  void openNowPlaying(BuildContext context) {
-    showMaterialModalBottomSheet(
-      context: context,
-      builder: (context) => PlayingScreen(),
-    );
-    // Get.bottomSheet(FolderSongsBottomSheet(), isScrollControlled: true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
-    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
-    return GetX<PlayerController>(builder: (controller) {
-      return Container(
-        width: MediaQuery.of(context).size.width,
-        decoration: BoxDecoration(
-            color: bcolor.withOpacity(.16),
-            border: Border(
-              top: BorderSide(
-                width: 2,
-                color: Colors.grey.withOpacity(.05),
-              ),
-            )),
-        child: ListTile(
-          onTap: () {
-            openNowPlaying(context);
-          },
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          leading: ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: QueryArtworkWidget(
-              id: int.parse(controller.id.value),
-              type: ArtworkType.AUDIO,
-              artworkBorder: BorderRadius.zero,
-              nullArtworkWidget: Image.asset(
-                'lib/assets/art.png',
-                fit: BoxFit.cover,
-                height: 48,
-              ),
-            ),
-          ),
-          title: Text(
-            controller.getMeta(controller.title.value),
-            style: xtitle.copyWith(fontSize: 18),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: StreamBuilder<Duration>(
-              stream: controller.hasCurrent.value
-                  ? controller.player.value.positionStream
-                  : const Stream.empty(),
-              builder: (context, snapshot) {
-                int? current =
-                    snapshot.hasData ? snapshot.data!.inMilliseconds : 0;
-
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      formatDuration(
-                        Duration(milliseconds: current),
-                      ),
-                    ),
-                  ],
-                );
-              }),
-          trailing: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: IconButton(
-              iconSize: 30,
-              onPressed: () {
-                controller.play();
-              },
-              color: Colors.white,
-              splashColor: Theme.of(context).primaryColor.withOpacity(.5),
-              icon: StreamBuilder<bool>(
-                  stream: controller.player.value.playingStream,
-                  builder: (context, asyncSnapshot) {
-                    if (asyncSnapshot.hasData) {
-                      bool playing = asyncSnapshot.data as bool;
-                      return Icon(playing
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded);
-                    } else {
-                      return const Icon(Icons.play_arrow_outlined);
-                    }
-                  }),
-            ),
-          ),
-        ),
-      );
-    });
-  }
-}

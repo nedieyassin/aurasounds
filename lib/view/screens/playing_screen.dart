@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/utils/helpers.dart';
-import 'package:aurasounds/view/components/song_tile.dart';
+import 'package:aurasounds/view/components/tiles/song_tile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -23,9 +23,7 @@ class PlayingScreen extends StatelessWidget {
       return Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: (controller.hasArtByteArray.value
-                ? MemoryImage(controller.artByteArray.value)
-                : const AssetImage('lib/assets/art.png')) as ImageProvider,
+            image: MemoryImage(controller.artByteArray.value),
             fit: BoxFit.cover,
           ),
         ),
@@ -145,70 +143,78 @@ class PlayingScreen extends StatelessWidget {
                           )
                         else
                           Container(),
-                        Container(
-                          padding: const EdgeInsets.only(
-                              top: 20, left: 20, right: 20),
-                          child: Column(
-                            children: [
-                              StreamBuilder<Duration>(
-                                stream: controller.hasCurrent.value
-                                    ? controller.player.value.positionStream
-                                    : const Stream.empty(),
-                                builder: (context, snapshot) {
-                                  int? current = snapshot.hasData
-                                      ? snapshot.data!.inMilliseconds
-                                      : 0;
-                                  double value = 0;
-                                  if (controller.hasCurrent.value) {
-                                    value = current /
-                                        controller
-                                            .duration.value.inMilliseconds;
-                                  }
-                                  return Slider(
-                                    // activeColor: Colors.black,
-                                    inactiveColor: Colors.grey.shade600,
-                                    onChanged: (double value) {
-                                      if (controller.hasCurrent.value) {
-                                        controller.player.value.seek(Duration(
-                                            milliseconds: (controller.duration
-                                                        .value.inMilliseconds *
-                                                    value)
-                                                .toInt()));
-                                      }
-                                    },
-                                    value: value,
-                                  );
-                                },
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 22),
-                                child: StreamBuilder<Duration>(
-                                    stream: controller.hasCurrent.value
-                                        ? controller.player.value.positionStream
-                                        : const Stream.empty(),
-                                    builder: (context, snapshot) {
-                                      int? current = snapshot.hasData
-                                          ? snapshot.data!.inMilliseconds
-                                          : 0;
+                        controller.isRadio.value
+                            ? const SizedBox()
+                            : Container(
+                                padding: const EdgeInsets.only(
+                                    top: 20, left: 20, right: 20),
+                                child: Column(
+                                  children: [
+                                    StreamBuilder<Duration>(
+                                      stream: controller.hasCurrent.value
+                                          ? controller
+                                              .player.value.positionStream
+                                          : const Stream.empty(),
+                                      builder: (context, snapshot) {
+                                        int? current = snapshot.hasData
+                                            ? snapshot.data!.inMilliseconds
+                                            : 0;
+                                        double value = 0;
+                                        if (controller.hasCurrent.value) {
+                                          value = current /
+                                              controller.duration.value
+                                                  .inMilliseconds;
+                                        }
+                                        return Slider(
+                                          // activeColor: Colors.black,
+                                          inactiveColor: Colors.grey.shade600,
+                                          onChanged: (double value) {
+                                            if (controller.hasCurrent.value) {
+                                              controller.player.value.seek(
+                                                  Duration(
+                                                      milliseconds: (controller
+                                                                  .duration
+                                                                  .value
+                                                                  .inMilliseconds *
+                                                              value)
+                                                          .toInt()));
+                                            }
+                                          },
+                                          value: value,
+                                        );
+                                      },
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 22),
+                                      child: StreamBuilder<Duration>(
+                                          stream: controller.hasCurrent.value
+                                              ? controller
+                                                  .player.value.positionStream
+                                              : const Stream.empty(),
+                                          builder: (context, snapshot) {
+                                            int? current = snapshot.hasData
+                                                ? snapshot.data!.inMilliseconds
+                                                : 0;
 
-                                      return Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(formatDuration(
-                                              Duration(milliseconds: current))),
-                                          Text(formatDuration(
-                                              controller.duration.value)),
-                                        ],
-                                      );
-                                    }),
+                                            return Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Text(formatDuration(Duration(
+                                                    milliseconds: current))),
+                                                Text(formatDuration(
+                                                    controller.duration.value)),
+                                              ],
+                                            );
+                                          }),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 20),
                           child: Row(
@@ -220,43 +226,84 @@ class PlayingScreen extends StatelessWidget {
                                   onPressed: controller.player.value.hasPrevious
                                       ? () {
                                           if (controller.hasCurrent.value) {
-                                            playerController.player.value
-                                                .seekToPrevious();
+                                            playerController.player.value.seekToPrevious();
                                           }
                                         }
                                       : null,
                                   icon:
                                       const Icon(Icons.skip_previous_rounded)),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).primaryColor,
-                                  borderRadius: BorderRadius.circular(99),
-                                ),
-                                child: IconButton(
-                                  iconSize: 50,
-                                  onPressed: () {
-                                    controller.play();
-                                  },
-                                  color: Colors.white,
-                                  splashColor: Theme.of(context)
-                                      .primaryColor
-                                      .withOpacity(.5),
-                                  icon: StreamBuilder<bool>(
-                                      stream:
-                                          controller.player.value.playingStream,
-                                      builder: (context, asyncSnapshot) {
-                                        if (asyncSnapshot.hasData) {
-                                          bool playing =
-                                              asyncSnapshot.data as bool;
-                                          return Icon(playing
-                                              ? Icons.pause_rounded
-                                              : Icons.play_arrow_rounded);
-                                        } else {
-                                          return const Icon(
-                                              Icons.play_arrow_outlined);
-                                        }
-                                      }),
-                                ),
+                              StreamBuilder<ProcessingState>(
+                                stream: controller
+                                    .player.value.processingStateStream,
+                                builder: (context, snap) {
+                                  if (snap.hasData && !snap.hasError) {
+                                    if (snap.data !=
+                                            ProcessingState.buffering &&
+                                        snap.data != ProcessingState.loading) {
+                                      return StreamBuilder<bool>(
+                                          stream: controller
+                                              .player.value.playingStream,
+                                          builder: (context, asyncSnapshot) {
+                                            if (asyncSnapshot.hasData) {
+                                              bool playing =
+                                                  asyncSnapshot.data as bool;
+                                              return Container(
+                                                decoration: BoxDecoration(
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                  borderRadius:
+                                                      BorderRadius.circular(99),
+                                                ),
+                                                child: IconButton(
+                                                  iconSize: 50,
+                                                  onPressed: () {
+                                                    controller.play();
+                                                  },
+                                                  color: Colors.white,
+                                                  splashColor: Theme.of(context)
+                                                      .primaryColor
+                                                      .withOpacity(.5),
+                                                  icon: Icon(playing
+                                                      ? Icons.pause_rounded
+                                                      : Icons
+                                                          .play_arrow_rounded),
+                                                ),
+                                              );
+                                            } else {
+                                              return Container(
+                                                decoration: BoxDecoration(
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                  borderRadius:
+                                                      BorderRadius.circular(99),
+                                                ),
+                                                child: IconButton(
+                                                  iconSize: 50,
+                                                  onPressed: () {
+                                                    controller.play();
+                                                  },
+                                                  color: Colors.white,
+                                                  splashColor: Theme.of(context)
+                                                      .primaryColor
+                                                      .withOpacity(.5),
+                                                  icon: const Icon(
+                                                      Icons.play_arrow_rounded),
+                                                ),
+                                              );
+                                            }
+                                          });
+                                    } else {
+                                      return IconButton(
+                                        icon: const CircularProgressIndicator(),
+                                        iconSize: 50,
+                                        onPressed: () {},
+                                      );
+                                    }
+                                  } else {
+                                    return const Icon(
+                                        Icons.error_outline_outlined);
+                                  }
+                                },
                               ),
                               IconButton(
                                 iconSize: 40,
@@ -316,16 +363,18 @@ class Actions extends StatelessWidget {
                   }
                   return IconButton(
                     iconSize: 30,
-                    onPressed: () {
-                      controller.toggleRepeatOne();
-                    },
+                    onPressed: controller.isRadio.value
+                        ? null
+                        : () {
+                            controller.toggleRepeatOne();
+                          },
                     icon: Icon(
                       mode == LoopMode.one
                           ? Icons.repeat_one_outlined
                           : Icons.repeat_outlined,
                       color: mode != LoopMode.off
                           ? Theme.of(context).primaryColor
-                          : fcolor,
+                          : (controller.isRadio.value ? Colors.grey : fcolor),
                     ),
                   );
                 },
@@ -339,21 +388,26 @@ class Actions extends StatelessWidget {
                     }
                     return IconButton(
                       iconSize: 30,
-                      onPressed: () {
-                        controller.toggleShuffle();
-                      },
+                      onPressed: controller.isRadio.value
+                          ? null
+                          : () {
+                              controller.toggleShuffle();
+                            },
                       icon: Icon(
                         Icons.shuffle_rounded,
-                        color:
-                            shuffle ? Theme.of(context).primaryColor : fcolor,
+                        color: shuffle
+                            ? Theme.of(context).primaryColor
+                            : (controller.isRadio.value ? Colors.grey : fcolor),
                       ),
                     );
                   }),
               IconButton(
                 iconSize: 30,
-                onPressed: () {
-                  controller.toggleFavourite();
-                },
+                onPressed: controller.isRadio.value
+                    ? null
+                    : () {
+                        controller.toggleFavourite();
+                      },
                 icon: controller.isFavourite.value
                     ? const Icon(
                         Icons.favorite,
@@ -399,7 +453,7 @@ class Lyrics extends StatelessWidget {
                   children: [
                     const CircularProgressIndicator(),
                     Padding(
-                      padding: EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(8.0),
                       child: Text(
                         'Loading lyrics',
                         style: xtitle,
@@ -463,7 +517,9 @@ class ArtWork extends StatelessWidget {
               artworkBorder: BorderRadius.zero,
               artworkFit: BoxFit.contain,
               nullArtworkWidget: Image.asset(
-                'lib/assets/art.png',
+                controller.isRadio.value
+                    ? 'lib/assets/${getThemedAsset('radio.png')}'
+                    : 'lib/assets/${getThemedAsset('cover.png')}',
                 fit: BoxFit.contain,
               ),
             );

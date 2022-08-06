@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:aurasounds/model/type.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-
-import 'native.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class DBModel {
   Future<Database> _initDB() async {
@@ -30,8 +32,8 @@ class DBModel {
 	"favourite"	INTEGER,
 	"date_added"	INTEGER,
 	"date_last_played"	INTEGER,
-	"lyrics"	TEXT,
 	"art_path"	TEXT,
+	"lyrics"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
           ''');
@@ -50,8 +52,29 @@ class DBModel {
         artUri: Uri.parse(info['art_path']),
         extras: {
           'uri': info['uri'],
+          'art_path': info['art_path'],
+          'artist_id': info['artist_id'],
+          'album_id': info['album_id'],
           'favourite': info['favourite'],
           'play_count': info['play_count'] ?? 0,
+        });
+  }
+
+  MediaItem _toRadioMediaItem(Map<String, dynamic> info) {
+    // print(info['art_path']);
+    return MediaItem(
+        id: info['id'].toString(),
+        title: info['title'],
+        artist: 'Live Stream',
+        album: 'On Air',
+        playable: true,
+        duration: const Duration(milliseconds: 0),
+        extras: {
+          'uri': info['uri'],
+          'favourite': 0,
+          'play_count': 0,
+          'alias': info['alias'],
+          'is_radio': true,
         });
   }
 
@@ -59,6 +82,22 @@ class DBModel {
     return FolderModel(
       folder: info['folder'],
       folderUri: info['folder_uri'],
+      numberOfSongs: info['number_of_songs'],
+    );
+  }
+
+  XAlbumModel _toAlbumModel(Map<String, dynamic> info) {
+    return XAlbumModel(
+      albumName: info['album'],
+      albumUri: info['album_id'].toString(),
+      numberOfSongs: info['number_of_songs'],
+    );
+  }
+
+  XArtistModel _toArtistModel(Map<String, dynamic> info) {
+    return XArtistModel(
+      artistName: info['artist'],
+      artistUri: info['artist_id'].toString(),
       numberOfSongs: info['number_of_songs'],
     );
   }
@@ -84,6 +123,21 @@ class DBModel {
     Database _database = await _initDB();
     List<Map<String, dynamic>> _sl = await _database.rawQuery(
       '''SELECT * FROM music WHERE folder_uri='$fl' ORDER BY $sv $so''',
+    );
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
+  }
+
+  Future<List<MediaItem>> getAlbumSongs(String fl, String sv, String so) async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT * FROM music WHERE album_id=$fl ORDER BY $sv $so''',
+    );
+    return _sl.map((rs) => _toMediaItem(rs)).toList();
+  }
+  Future<List<MediaItem>> getArtistSongs(String fl, String sv, String so) async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT * FROM music WHERE artist_id=$fl ORDER BY $sv $so''',
     );
     return _sl.map((rs) => _toMediaItem(rs)).toList();
   }
@@ -148,9 +202,25 @@ class DBModel {
   Future<List<FolderModel>> getAllSongFolders() async {
     Database _database = await _initDB();
     List<Map<String, dynamic>> _sl = await _database.rawQuery(
-      '''SELECT folder, folder_uri,COUNT(folder_uri) as number_of_songs FROM 'music'  GROUP BY folder, folder_uri''',
+      '''SELECT folder, folder_uri, COUNT(folder_uri) as number_of_songs FROM 'music'  GROUP BY folder, folder_uri''',
     );
     return _sl.map((rs) => _toFolderModel(rs)).toList();
+  }
+
+  Future<List<XAlbumModel>> getAllSongAlbums() async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT album, album_id, COUNT(album_id) as number_of_songs FROM 'music'  GROUP BY album, album_id ORDER BY album  ASC''',
+    );
+    return _sl.map((rs) => _toAlbumModel(rs)).toList();
+  }
+
+  Future<List<XArtistModel>> getAllSongArtists() async {
+    Database _database = await _initDB();
+    List<Map<String, dynamic>> _sl = await _database.rawQuery(
+      '''SELECT artist, artist_id, COUNT(artist_id) as number_of_songs FROM 'music'  GROUP BY artist, artist_id ORDER BY artist  ASC''',
+    );
+    return _sl.map((rs) => _toArtistModel(rs)).toList();
   }
 
   Future<bool> updateLibrary(List<SongModel> songs) async {
@@ -169,7 +239,7 @@ class DBModel {
       String folderUri = directory.parent.path;
       String folder = directory.parent.path.split("/").last;
 
-      String artPath = ''; //await saveArtWork(id: song.id);
+      String artPath = await saveArtWork(song.id);
 
       // print(folder);
 
@@ -189,38 +259,204 @@ class DBModel {
               folder,
               date_added,
               size,
-              art_path
-              ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', [
+              art_path,
+              lyrics
+              ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', [
             song.id,
             song.artistId,
             song.albumId,
             song.data,
             song.uri,
             song.title.split('(')[0],
-            song.artist,
-            song.album,
+            song.artist ?? '<unknown>',
+            song.album ?? '<unknown>',
             song.duration,
             folderUri.replaceAll('/', '-'),
             folder,
             song.dateAdded,
             song.size,
-            artPath
+            artPath,
+            ''
           ]);
         });
       } else {}
     }
     return true;
   }
-}
 
-class FolderModel {
-  const FolderModel({
-    required this.folder,
-    required this.folderUri,
-    required this.numberOfSongs,
-  });
+  Future<String> saveArtWork(int id) async {
+    Uint8List? _byte = await OnAudioQuery().queryArtwork(
+      id,
+      ArtworkType.AUDIO,
+    );
 
-  final String folder;
-  final String folderUri;
-  final int numberOfSongs;
+    Directory tempDir = await getTemporaryDirectory();
+    String tempPath = tempDir.path;
+    String _fPath = '';
+
+    if (_byte != null && _byte.isNotEmpty) {
+      final File _file = File('$tempPath/$id.jpg');
+      await _file.writeAsBytes(_byte);
+      _fPath = _file.path;
+    } else {
+      final File _file2 = File('$tempPath/default-art.jpg');
+      if (!await _file2.exists()) {
+        final byteData = await rootBundle.load('lib/assets/light-cover.png');
+        await _file2.writeAsBytes(
+          byteData.buffer.asUint8List(
+            byteData.offsetInBytes,
+            byteData.lengthInBytes,
+          ),
+        );
+      }
+      _fPath = _file2.path;
+    }
+
+    return _fPath;
+  }
+
+  Future<List<MediaItem>> getRadioStations() async {
+    List<Map<String, dynamic>> _sl = [
+      {
+        'id': 1,
+        'title': 'Zodiak Radio',
+        'alias': '',
+        'uri': 'https://ice31.securenetsystems.net/0079',
+      },
+      {
+        'id': 2,
+        'title': 'Times Radio',
+        'alias': '',
+        'uri': 'https://ice1.securenetsystems.net/DEMOSTN',
+      },
+      {
+        'id': 200,
+        'title': 'MBC Radio 2',
+        'alias': '',
+        'uri': 'http://154.66.125.13:86/broadwavehigh.mp3?src=1',
+      },
+      {
+        'id': 3,
+        'title': 'Capital FM',
+        'alias': 'mw.capitalfmmalawi',
+        'uri': 'https://node.stream-africa.com:8443/CapitalFM',
+      },
+      {
+        'id': 4,
+        'title': 'Ufulu FM',
+        'alias': '',
+        'uri': 'https://s5.voscast.com:9463/live',
+      },
+      {
+        'id': 5,
+        'title': 'Beyond FM',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net:8070/radio.mp3',
+      },
+      {
+        'id': 6,
+        'title': 'Angaliba Radio',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net/radio/8040/radio.mp3',
+      },
+      {
+        'id': 7,
+        'title': 'PL FM',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net:8220/plfm',
+      },
+      {
+        'id': 8,
+        'title': 'Umunthu',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net:8150/radio.Aac+',
+      },
+      {
+        'id': 9,
+        'title': 'Mzati FM',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net/radio/8100/mzati.AAC',
+      },
+      {
+        'id': 10,
+        'title': 'Chisomo Radio',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net/radio/8010/radio.mp3',
+      },
+      {
+        'id': 11,
+        'title': 'Voice of Livingstonia Radio',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net/radio/8270/vol',
+      },
+      {
+        'id': 12,
+        'title': 'Nkhotakota Community Radio',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net:8260/kkradio',
+      },
+      {
+        'id': 14,
+        'title': 'Kasupe Radio',
+        'alias': '',
+        'uri': 'https://s45.radiolize.com/radio/8060/radio.mp3',
+      },
+      {
+        'id': 15,
+        'title': 'Kuwala FM',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net:8330/radio.mp3',
+      },
+      {
+        'id': 17,
+        'title': 'Story Club FM',
+        'alias': 'mw.storyclub',
+        'uri': 'https://exclusive.streamafrica.net/radio/8350/storyclub',
+      },
+      {
+        'id': 18,
+        'title': 'Ndirande FM',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net:8130/ndirande.Aac+',
+      },
+      {
+        'id': 19,
+        'title': 'Hosanna FM',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net:8370/hosanna',
+      },
+      {
+        'id': 20,
+        'title': 'Tigawane Radio',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net/radio/8110/tigawane',
+      },
+      {
+        'id': 21,
+        'title': 'TWR',
+        'alias': '',
+        'uri': 'https://exclusive.streamafrica.net:8210/twr.mp3',
+      },
+      {
+        'id': 22,
+        'title': 'Hitz Radio Malawi',
+        'alias': 'mw.hitzmalawi',
+        'uri': 'https://exclusive.streamafrica.net:8300/radio.mp3',
+      },
+      {
+        'id': 23,
+        'title': 'Likoma Community Radio',
+        'alias': 'mw.likomacommunity',
+        'uri': 'https://exclusive.streamafrica.net:8390/likoma',
+      },
+      {
+        'id': 24,
+        'title': 'Mlatho Radio',
+        'alias': 'mw.mlatho',
+        'uri': 'http://s33.myradiostream.com:15154/listen.mp3',
+      },
+    ];
+
+    return _sl.map((rs) => _toRadioMediaItem(rs)).toList();
+  }
 }

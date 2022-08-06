@@ -10,6 +10,8 @@ ThemeData darkTheme(MaterialColor color) => ThemeData(
       primarySwatch: color,
       primaryColor: color,
       splashColor: color,
-      accentColor: color,
+      indicatorColor: color,
+      accentColor: Colors.transparent,
       scaffoldBackgroundColor: const Color(0xFF090909),
+      cardColor: Colors.grey.shade900
     );

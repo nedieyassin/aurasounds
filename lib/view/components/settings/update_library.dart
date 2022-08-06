@@ -1,3 +1,4 @@
+import 'package:aurasounds/controller/library_controller.dart';
 import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/controller/settings_controller.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,7 @@ class UpdateLibrary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var settingsController = Get.put(SettingsController());
-    var playerController = Get.find<PlayerController>();
+    final libraryController = Get.find<LibraryController>();
     return SafeArea(
       child: GetX<SettingsController>(
         builder: (controller) {
@@ -39,7 +40,7 @@ class UpdateLibrary extends StatelessWidget {
                         child: const Text('Scan & Update Library'),
                         onPressed: () {
                           settingsController.updateLibrary().then((value) {
-                            playerController.initSongs();
+                            libraryController.initSongs();
                           });
                         },
                         style: ButtonStyle(
