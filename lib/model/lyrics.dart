@@ -1,19 +1,26 @@
+import 'dart:convert';
 import 'package:http/http.dart';
 
 class Lyrics {
+  static Future<String> radioProgramme(String alias) async {
+    var _l = (await get(
+            Uri.parse('https://scraper2.onlineradiobox.com/${alias}?l=0')))
+        .body;
+    Map _j = jsonDecode(_l);
+    return _j['title'] ?? '';
+  }
+
   static Future<String> getLyrics({
     required String title,
     required String artist,
   }) async {
     String lyrics = '';
-      lyrics = await getMusixMatchLyrics(title: title, artist: artist);
-      if (lyrics == '') {
-        lyrics = await getGoogleLyrics(title: title, artist: artist);
-      }
+    lyrics = await getMusixMatchLyrics(title: title, artist: artist);
+    if (lyrics == '') {
+      lyrics = await getGoogleLyrics(title: title, artist: artist);
+    }
     return lyrics;
   }
-
-
 
   static Future<String> getGoogleLyrics({
     required String title,
@@ -66,14 +73,13 @@ class Lyrics {
     return lyrics.trim();
   }
 
-
   static Future<String> getLyricsLink(String song, String artist) async {
     const String authority = 'www.musixmatch.com';
     final String unencodedPath = '/search/$song $artist';
     final Response res = await get(Uri.https(authority, unencodedPath));
     if (res.statusCode != 200) return '';
     final RegExpMatch? result =
-    RegExp(r'href=\"(\/lyrics\/.*?)\"').firstMatch(res.body);
+        RegExp(r'href=\"(\/lyrics\/.*?)\"').firstMatch(res.body);
     return result == null ? '' : result[1]!;
   }
 

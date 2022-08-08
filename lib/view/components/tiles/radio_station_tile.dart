@@ -34,7 +34,7 @@ class RadioStationTile extends StatelessWidget {
         margin: EdgeInsets.only(bottom: isLast ? 160 : 0, left: 10, right: 10, top: 4),
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.all(Radius.circular(16)),
-          border: controller.getCurrentAudioId.value == int.parse(audio.id)
+          border: controller.getCurrentAudioId.value == audio.id
               ? Border.all(width: 2, color: Theme.of(context).primaryColor)
               : Border.all(
                   width: 0, color: Theme.of(context).scaffoldBackgroundColor),

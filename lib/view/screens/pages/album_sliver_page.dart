@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'dart:ui';
-
 import 'package:aurasounds/controller/library_controller.dart';
 import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/model/type.dart';
@@ -39,8 +38,6 @@ class AlbumSliverPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
-    Color bcolor = !Get.isDarkMode ? Colors.white : Colors.black;
     return Scaffold(
       body: GetX<LibraryController>(builder: (controller) {
         return Stack(

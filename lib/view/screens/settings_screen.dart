@@ -80,20 +80,7 @@ class SettingsScreen extends StatelessWidget {
                   );
                 },
               ),
-              SettingsListTile(
-                icon: Icons.grid_view_rounded,
-                title: 'Terms of Use',
-                intro:
-                    'The app is copyrighted to its developers, it should not be sold or cloned',
-                onTap: () {
-                  Get.to(
-                    () => const XBottomSheet(
-                      title: 'Terms of Use',
-                      body: TermsScreen(),
-                    ),
-                  );
-                },
-              ),
+              const Divider(indent: 70,endIndent: 20,),
               SettingsListTile(
                 icon: Icons.info_outline_rounded,
                 title: 'About aurasounds',
@@ -117,6 +104,20 @@ class SettingsScreen extends StatelessWidget {
                     () => const XBottomSheet(
                       title: 'Developers',
                       body: Developers(),
+                    ),
+                  );
+                },
+              ),
+              SettingsListTile(
+                icon: Icons.grid_view_rounded,
+                title: 'Terms of Use',
+                intro:
+                    'The app is copyrighted to its developers, it should not be sold or cloned',
+                onTap: () {
+                  Get.to(
+                    () => const XBottomSheet(
+                      title: 'Terms of Use',
+                      body: TermsScreen(),
                     ),
                   );
                 },

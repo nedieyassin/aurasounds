@@ -3,6 +3,7 @@ import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/utils/helpers.dart';
 import 'package:aurasounds/view/components/tiles/song_tile.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -51,33 +52,85 @@ class PlayingScreen extends StatelessWidget {
                                 style: xheading.copyWith(
                                     color: fcolor, fontFamily: 'Cust'),
                               ),
-                              ElevatedButton(
-                                child: Text(
-                                  !controller.openLyrics.value
-                                      ? "Lyrics"
-                                      : "Close",
-                                ),
-                                onPressed: () {
-                                  controller.toggleMiniLyrics();
-                                },
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all(
-                                    Theme.of(context).scaffoldBackgroundColor,
-                                  ),
-                                  foregroundColor:
-                                      MaterialStateProperty.all(fcolor),
-                                  padding: MaterialStateProperty.all(
-                                    const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 2),
-                                  ),
-                                  shape: MaterialStateProperty.all(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(99),
-                                    ),
-                                  ),
-                                  elevation: MaterialStateProperty.all(0),
-                                ),
-                              )
+                              controller.isRadio.value
+                                  ? Opacity(
+                                      opacity:
+                                          controller.radioAlias.value.isEmpty
+                                              ? .3
+                                              : 1,
+                                      child: ElevatedButton(
+                                        child: controller.programmeLoading.value
+                                            ? const SizedBox(
+                                                width: 10,
+                                                height: 10,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 1,
+                                                ))
+                                            : const Text('Whats on Air'),
+                                        onPressed: controller
+                                                .radioAlias.value.isEmpty
+                                            ? null
+                                            : () {
+                                                controller.getRadioProgramme();
+                                              },
+                                        style: ButtonStyle(
+                                          backgroundColor:
+                                              MaterialStateProperty.all(
+                                            Theme.of(context)
+                                                .scaffoldBackgroundColor,
+                                          ),
+                                          foregroundColor:
+                                              MaterialStateProperty.all(fcolor),
+                                          padding: MaterialStateProperty.all(
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 14, vertical: 2),
+                                          ),
+                                          shape: MaterialStateProperty.all(
+                                            RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(99),
+                                            ),
+                                          ),
+                                          elevation:
+                                              MaterialStateProperty.all(0),
+                                        ),
+                                      ),
+                                    )
+                                  : controller.isYoutube.value
+                                      ? const SizedBox()
+                                      : ElevatedButton(
+                                          child: Text(
+                                            !controller.openLyrics.value
+                                                ? "Lyrics"
+                                                : "Close",
+                                          ),
+                                          onPressed: () {
+                                            controller.toggleMiniLyrics();
+                                          },
+                                          style: ButtonStyle(
+                                            backgroundColor:
+                                                MaterialStateProperty.all(
+                                              Theme.of(context)
+                                                  .scaffoldBackgroundColor,
+                                            ),
+                                            foregroundColor:
+                                                MaterialStateProperty.all(
+                                                    fcolor),
+                                            padding: MaterialStateProperty.all(
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 14, vertical: 2),
+                                            ),
+                                            shape: MaterialStateProperty.all(
+                                              RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(99),
+                                              ),
+                                            ),
+                                            elevation:
+                                                MaterialStateProperty.all(0),
+                                          ),
+                                        )
                             ],
                           ),
                         ),
@@ -226,7 +279,8 @@ class PlayingScreen extends StatelessWidget {
                                   onPressed: controller.player.value.hasPrevious
                                       ? () {
                                           if (controller.hasCurrent.value) {
-                                            playerController.player.value.seekToPrevious();
+                                            playerController.player.value
+                                                .seekToPrevious();
                                           }
                                         }
                                       : null,
@@ -388,30 +442,38 @@ class Actions extends StatelessWidget {
                     }
                     return IconButton(
                       iconSize: 30,
-                      onPressed: controller.isRadio.value
-                          ? null
-                          : () {
-                              controller.toggleShuffle();
-                            },
+                      onPressed:
+                          controller.isRadio.value || controller.isYoutube.value
+                              ? null
+                              : () {
+                                  controller.toggleShuffle();
+                                },
                       icon: Icon(
                         Icons.shuffle_rounded,
                         color: shuffle
                             ? Theme.of(context).primaryColor
-                            : (controller.isRadio.value ? Colors.grey : fcolor),
+                            : (controller.isRadio.value ||
+                                    controller.isYoutube.value
+                                ? Colors.grey
+                                : fcolor),
                       ),
                     );
                   }),
               IconButton(
                 iconSize: 30,
-                onPressed: controller.isRadio.value
-                    ? null
-                    : () {
-                        controller.toggleFavourite();
-                      },
+                onPressed:
+                    controller.isRadio.value || controller.isYoutube.value
+                        ? null
+                        : () {
+                            controller.toggleFavourite();
+                          },
                 icon: controller.isFavourite.value
-                    ? const Icon(
+                    ? Icon(
                         Icons.favorite,
-                        color: Colors.red,
+                        color: controller.isRadio.value ||
+                                controller.isYoutube.value
+                            ? Colors.grey
+                            : Colors.red,
                       )
                     : const Icon(Icons.favorite_outline),
               ),
@@ -510,19 +572,36 @@ class ArtWork extends StatelessWidget {
       child: Container(
         child: GetX<PlayerController>(
           builder: (controller) {
-            return QueryArtworkWidget(
-              id: int.parse(controller.id.value),
-              quality: 100,
-              type: ArtworkType.AUDIO,
-              artworkBorder: BorderRadius.zero,
-              artworkFit: BoxFit.contain,
-              nullArtworkWidget: Image.asset(
-                controller.isRadio.value
-                    ? 'lib/assets/${getThemedAsset('radio.png')}'
-                    : 'lib/assets/${getThemedAsset('cover.png')}',
-                fit: BoxFit.contain,
-              ),
-            );
+            return controller.isYoutube.value
+                ? CachedNetworkImage(
+                    fit: BoxFit.cover,
+                    imageUrl: controller.getArtUrl.value,
+                    errorWidget: (context, _, __) => Image(
+                      fit: BoxFit.cover,
+                      image: AssetImage(
+                        'lib/assets/${getThemedAsset('youtube.png')}',
+                      ),
+                    ),
+                    placeholder: (context, url) => Image(
+                      fit: BoxFit.cover,
+                      image: AssetImage(
+                        'lib/assets/${getThemedAsset('youtube.png')}',
+                      ),
+                    ),
+                  )
+                : QueryArtworkWidget(
+                    id: int.parse(controller.id.value),
+                    quality: 100,
+                    type: ArtworkType.AUDIO,
+                    artworkBorder: BorderRadius.zero,
+                    artworkFit: BoxFit.contain,
+                    nullArtworkWidget: Image.asset(
+                      controller.isRadio.value
+                          ? 'lib/assets/${getThemedAsset('radio.png')}'
+                          : 'lib/assets/${getThemedAsset('cover.png')}',
+                      fit: BoxFit.contain,
+                    ),
+                  );
           },
         ),
         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 40),
@@ -564,6 +643,7 @@ class PlaylistQueue extends StatelessWidget {
                 await playAudios(pos);
               },
               audio: audio,
+              trailing: false,
               index: playerController.currentQueueList[index],
               isLast: index + 1 ==
                   (playerController.player.value.sequence ?? []).length,

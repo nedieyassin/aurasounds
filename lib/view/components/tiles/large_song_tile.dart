@@ -42,7 +42,9 @@ class LargeSongTile extends StatelessWidget {
                         artworkBorder: BorderRadius.zero,
                         artworkWidth: 500,
                         nullArtworkWidget: Image.asset(
-                          mini ? 'lib/assets/${getThemedAsset('art.png')}' : 'lib/assets/${getThemedAsset('cover.png')}',
+                          mini
+                              ? 'lib/assets/${getThemedAsset('art.png')}'
+                              : 'lib/assets/${getThemedAsset('cover.png')}',
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -57,8 +59,7 @@ class LargeSongTile extends StatelessWidget {
                           onPressed: () {
                             onPlay();
                           },
-                          icon: controller.getCurrentAudioId.value ==
-                                  int.parse(audio.id)
+                          icon: controller.getCurrentAudioId.value == audio.id
                               ? const Icon(
                                   Icons.bar_chart_rounded,
                                   color: Colors.white,

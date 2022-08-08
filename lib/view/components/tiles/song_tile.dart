@@ -5,6 +5,7 @@ import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/utils/helpers.dart';
 import 'package:aurasounds/view/screens/pages/album_sliver_page.dart';
 import 'package:aurasounds/view/screens/pages/artist_sliver_page.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -19,6 +20,7 @@ class SongTile extends StatelessWidget {
     required this.isLast,
     this.showNumber = false,
     this.showPlayCount = false,
+    this.trailing = true,
     this.isFav = false,
   }) : super(key: key);
   final MediaItem audio;
@@ -27,6 +29,7 @@ class SongTile extends StatelessWidget {
   final bool showNumber;
   final bool showPlayCount;
   final bool isFav;
+  final bool trailing;
   final Function startPlaylist;
 
   final libraryController = Get.find<LibraryController>();
@@ -41,7 +44,7 @@ class SongTile extends StatelessWidget {
             bottom: isLast ? 160 : 0, left: 10, right: 10, top: 4),
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.all(Radius.circular(16)),
-          border: controller.getCurrentAudioId.value == int.parse(audio.id)
+          border: controller.getCurrentAudioId.value == audio.id
               ? Border.all(width: 2, color: Theme.of(context).primaryColor)
               : Border.all(
                   width: 0, color: Theme.of(context).scaffoldBackgroundColor),
@@ -61,16 +64,35 @@ class SongTile extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(9),
-                  child: QueryArtworkWidget(
-                    id: int.parse(audio.id),
-                    type: ArtworkType.AUDIO,
-                    artworkBorder: BorderRadius.zero,
-                    nullArtworkWidget: Image.asset(
-                      'lib/assets/${getThemedAsset('art.png')}',
-                      fit: BoxFit.cover,
-                      height: 48,
-                    ),
-                  ),
+                  child: audio.extras!['is_youtube'] ?? false
+                      ? CachedNetworkImage(
+                          width: 50,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          imageUrl: controller.getArtUrl.value,
+                          errorWidget: (context, _, __) => Image(
+                            fit: BoxFit.cover,
+                            image: AssetImage(
+                              'lib/assets/${getThemedAsset('youtube.png')}',
+                            ),
+                          ),
+                          placeholder: (context, url) => Image(
+                            fit: BoxFit.cover,
+                            image: AssetImage(
+                              'lib/assets/${getThemedAsset('youtube.png')}',
+                            ),
+                          ),
+                        )
+                      : QueryArtworkWidget(
+                          id: int.parse(audio.id),
+                          type: ArtworkType.AUDIO,
+                          artworkBorder: BorderRadius.zero,
+                          nullArtworkWidget: Image.asset(
+                            'lib/assets/${getThemedAsset('art.png')}',
+                            fit: BoxFit.cover,
+                            height: 48,
+                          ),
+                        ),
                 ),
                 showNumber
                     ? Positioned.fill(
@@ -140,7 +162,7 @@ class SongTile extends StatelessWidget {
                 )
               ],
             ),
-            trailing: audio.extras!['is_radio'] ?? false
+            trailing: audio.extras!['is_radio'] ?? false || !trailing
                 ? const SizedBox()
                 : PopupMenuButton<int>(
                     icon: const Icon(Icons.more_vert_rounded),

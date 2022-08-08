@@ -134,7 +134,9 @@ class DBModel {
     );
     return _sl.map((rs) => _toMediaItem(rs)).toList();
   }
-  Future<List<MediaItem>> getArtistSongs(String fl, String sv, String so) async {
+
+  Future<List<MediaItem>> getArtistSongs(
+      String fl, String sv, String so) async {
     Database _database = await _initDB();
     List<Map<String, dynamic>> _sl = await _database.rawQuery(
       '''SELECT * FROM music WHERE artist_id=$fl ORDER BY $sv $so''',
@@ -223,29 +225,44 @@ class DBModel {
     return _sl.map((rs) => _toArtistModel(rs)).toList();
   }
 
-  Future<bool> updateLibrary(List<SongModel> songs) async {
-    for (SongModel song in songs) {
-      if (!song.isMusic!) continue;
-      if (song.isRingtone!) continue;
-      if (song.isAlarm!) continue;
-      if (song.duration! < 60000) continue;
+  Future<List<int>> getAudioIds() async {
+    Database _database = await _initDB();
+    List<Map<String, Object?>> _sl = await _database.rawQuery(
+      '''SELECT audio_id FROM music''',
+    );
+    return _sl.map((rs) => rs['audio_id'] as int).toList();
+  }
 
-      Database _database = await _initDB();
-      List<Map> _sl = await _database
-          .rawQuery('SELECT * FROM music WHERE audio_id = ?', [song.id]);
+  Future<int> deleteAudioId(int id) async {
+    Database _database = await _initDB();
+    int _sl = await _database.rawDelete(
+      '''DELETE FROM music WHERE audio_id=$id''',
+    );
+    return _sl;
+  }
 
-      Directory directory = Directory(song.data);
+  Future<bool> updateLibrary(SongModel song) async {
+    if (!song.isMusic!) return false;
+    if (song.isRingtone!) return false;
+    if (song.isAlarm!) return false;
+    if (song.duration! < 60000) return false;
 
-      String folderUri = directory.parent.path;
-      String folder = directory.parent.path.split("/").last;
+    Database _database = await _initDB();
+    List<Map> _sl = await _database
+        .rawQuery('SELECT * FROM music WHERE audio_id = ?', [song.id]);
 
-      String artPath = await saveArtWork(song.id);
+    Directory directory = Directory(song.data);
 
-      // print(folder);
+    String folderUri = directory.parent.path;
+    String folder = directory.parent.path.split("/").last;
 
-      if (_sl.isEmpty) {
-        await _database.transaction((txn) async {
-          int id = await txn.rawInsert('''INSERT INTO music(
+    String artPath = await saveArtWork(song.id);
+
+    // print(folder);
+
+    if (_sl.isEmpty) {
+      await _database.transaction((txn) async {
+        int id = await txn.rawInsert('''INSERT INTO music(
               audio_id,
               artist_id,
               album_id,
@@ -262,24 +279,27 @@ class DBModel {
               art_path,
               lyrics
               ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', [
-            song.id,
-            song.artistId,
-            song.albumId,
-            song.data,
-            song.uri,
-            song.title.split('(')[0],
-            song.artist ?? '<unknown>',
-            song.album ?? '<unknown>',
-            song.duration,
-            folderUri.replaceAll('/', '-'),
-            folder,
-            song.dateAdded,
-            song.size,
-            artPath,
-            ''
-          ]);
-        });
-      } else {}
+          song.id,
+          song.artistId,
+          song.albumId,
+          song.data,
+          song.uri,
+          song.title.split('(')[0],
+          song.artist ?? '<unknown>',
+          song.album ?? '<unknown>',
+          song.duration,
+          folderUri.replaceAll('/', '-'),
+          folder,
+          song.dateAdded,
+          song.size,
+          artPath,
+          ''
+        ]);
+      });
+    } else {
+      await _database.rawUpdate(
+        '''UPDATE music SET folder_uri='${folderUri.replaceAll('/', '-')}', folder='$folder' WHERE audio_id=${song.id}''',
+      );
     }
     return true;
   }

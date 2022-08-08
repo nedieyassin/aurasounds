@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:aurasounds/model/database.dart';
 import 'package:aurasounds/model/lyrics.dart';
 import 'package:aurasounds/utils/helpers.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -14,13 +16,15 @@ class PlayerController extends GetxController {
   Rx<AudioPlayer> player = AudioPlayer().obs;
 
   RxList<int> currentQueueList = <int>[].obs;
-  RxInt getCurrentAudioIndex = 0.obs;
-  RxInt getCurrentAudioId = 0.obs;
+  RxInt getCurrentAudioIndex = 1000000.obs;
+  RxString getCurrentAudioId = ''.obs;
+  Rx<String> getArtUrl = ''.obs;
   RxString getCurrentPlaylistValue = ''.obs;
 
   RxString getLyricsValue = ''.obs;
   RxBool openLyrics = false.obs;
   RxBool lyricsLoading = false.obs;
+  RxBool programmeLoading = false.obs;
 
   Rx<Uint8List> artByteArray = Uint8List(0).obs;
   RxBool hasArtByteArray = false.obs;
@@ -29,6 +33,8 @@ class PlayerController extends GetxController {
   RxBool hasCurrent = false.obs;
   RxBool isFavourite = true.obs;
   RxBool isRadio = false.obs;
+  RxBool isYoutube = false.obs;
+  RxString radioAlias = ''.obs;
 
   RxString id = ''.obs;
   RxString title = ''.obs;
@@ -45,9 +51,9 @@ class PlayerController extends GetxController {
   }
 
   getArtByteArray() async {
-    if (!isRadio.value) {
+    if (!isRadio.value && !isYoutube.value) {
       Uint8List? _artByteArray = await _audioQuery.queryArtwork(
-        getCurrentAudioId.value,
+        int.parse(getCurrentAudioId.value),
         ArtworkType.AUDIO,
       );
       if (_artByteArray != null && _artByteArray.isNotEmpty) {
@@ -79,6 +85,38 @@ class PlayerController extends GetxController {
     });
   }
 
+  Future<void> getRadioProgramme() async {
+    programmeLoading.value = true;
+    Lyrics.radioProgramme(radioAlias.value).then((value) {
+      if (value.isNotEmpty) {
+        Get.snackbar(
+          'Message',
+          value,
+          margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+          duration: const Duration(seconds: 4),
+          isDismissible: true,
+          icon: const Icon(
+            Icons.message,
+            color: Colors.blue,
+          ),
+        );
+      } else {
+        Get.snackbar(
+          'Alert',
+          'Currently unable to get what\'s on Air ',
+          margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+          duration: const Duration(seconds: 2),
+          isDismissible: true,
+          icon: const Icon(
+            Icons.warning,
+            color: Colors.red,
+          ),
+        );
+      }
+      programmeLoading.value = false;
+    });
+  }
+
   void _listenForChangesInSequenceState() {
     player.value.sequenceStateStream.listen((sequenceState) {
       if (sequenceState == null) {
@@ -89,14 +127,19 @@ class PlayerController extends GetxController {
         hasCurrent.value = false;
         return;
       }
+
       MediaItem meta = sequenceState.currentSource!.tag as MediaItem;
       id.value = meta.id;
-      getCurrentAudioId.value = int.parse(meta.id);
+      getCurrentAudioId.value = meta.id;
+      getArtUrl.value = meta.artUri.toString();
       title.value = meta.title;
       artist.value = meta.artist ?? '';
       album.value = meta.album!;
       duration.value = meta.duration!;
       isRadio.value = meta.extras!['is_radio'] ?? false;
+      isYoutube.value = meta.extras!['is_youtube'] ?? false;
+      radioAlias.value = meta.extras!['alias'] ?? '';
+
       if (openLyrics.value) {
         getLyrics();
       }
@@ -109,10 +152,12 @@ class PlayerController extends GetxController {
       }
     });
 
-    player.value.currentIndexStream.listen((event) {
-      updateCurrentAudioId();
-      _updateFavourite();
-      _updatePlayCount();
+    player.value.processingStateStream.listen((event) {
+      if (event == ProcessingState.ready) {
+        updateCurrentAudioId();
+        _updateFavourite();
+        _updatePlayCount();
+      }
     });
 
     player.value.shuffleModeEnabledStream.listen((event) {
@@ -142,22 +187,25 @@ class PlayerController extends GetxController {
   }
 
   Future<void> toggleFavourite() async {
-    await _db.setFavourite(getCurrentAudioId.value, isFavourite.value ? 0 : 1);
+    await _db.setFavourite(
+        int.parse(getCurrentAudioId.value), isFavourite.value ? 0 : 1);
     await _updateFavourite();
   }
 
   Future<void> _updatePlayCount() async {
     if (!hasCurrent.value) return;
     if (isRadio.value) return;
+    if (isYoutube.value) return;
     if (getCurrentPlaylistValue.value == 'radio') return;
-    int nowId = getCurrentAudioId.value;
+    if (getCurrentPlaylistValue.value == 'youtube') return;
+    int nowId = int.parse(getCurrentAudioId.value);
     Future.delayed(
       Duration(
         milliseconds: (duration.value.inMilliseconds * 0.2).floor(),
       ),
     );
     if (nowId == getCurrentAudioId.value) {
-      await _db.setPlayCount(getCurrentAudioId.value);
+      await _db.setPlayCount(int.parse(getCurrentAudioId.value));
     }
   }
 
@@ -176,13 +224,13 @@ class PlayerController extends GetxController {
   void updateCurrentAudioId() {
     if (player.value.sequenceState == null) return;
     if (player.value.sequenceState!.currentSource == null) return;
-    getCurrentAudioId.value =
-        int.parse(player.value.sequenceState!.currentSource!.tag.id);
+    getCurrentAudioId.value = player.value.sequenceState!.currentSource!.tag.id;
     getArtByteArray();
   }
 
   Future<void> _updateFavourite() async {
-    Map? _fav = await _db.getFavourite(getCurrentAudioId.value);
+    if (isRadio.value || isYoutube.value) return;
+    Map? _fav = await _db.getFavourite(int.parse(getCurrentAudioId.value));
     if (_fav == null) {
       isFavourite.value = false;
       return;
@@ -209,6 +257,12 @@ class PlayerController extends GetxController {
           (MediaItem audio) {
             if (audio.extras!['is_radio'] != null &&
                 audio.extras!['is_radio'] as bool) {
+              return AudioSource.uri(
+                Uri.parse(audio.extras!['uri']),
+                tag: audio,
+              );
+            } else if (audio.extras!['is_youtube'] != null &&
+                audio.extras!['is_youtube'] as bool) {
               return AudioSource.uri(
                 Uri.parse(audio.extras!['uri']),
                 tag: audio,
@@ -245,10 +299,11 @@ class PlayerController extends GetxController {
           shuffle: shuffle,
         );
       }
-      print(position);
+
       await player.value.seek(const Duration(seconds: 0), index: position);
       await player.value.play();
       getCurrentAudioIndex.value = position;
+
       if (playlist != 'radio') {
         _updatePlayCount();
       }

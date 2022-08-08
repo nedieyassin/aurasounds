@@ -2,6 +2,7 @@ import 'package:aurasounds/controller/player_controller.dart';
 import 'package:aurasounds/utils/constants.dart';
 import 'package:aurasounds/utils/helpers.dart';
 import 'package:aurasounds/view/screens/playing_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -26,7 +27,6 @@ class MiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color bcolor = Get.isDarkMode ? Colors.black : Colors.white;
-    Color fcolor = Get.isDarkMode ? Colors.white : Colors.black;
     return GetX<PlayerController>(builder: (controller) {
       return controller.id.value.isEmpty ? const SizedBox() :  Container(
         width: MediaQuery.of(context).size.width,
@@ -105,16 +105,36 @@ class MiniPlayer extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(9),
-              child: QueryArtworkWidget(
+              child: controller.isYoutube.value ? CachedNetworkImage(
+                fit: BoxFit.cover,
+                height:48,
+                width: 48,
+                imageUrl: controller.getArtUrl.value,
+                errorWidget: (context, _, __) => Image(
+                  fit: BoxFit.cover,
+                  image: AssetImage(
+                    'lib/assets/${getThemedAsset('youtube.png')}',
+                  ),
+                ),
+                placeholder: (context, url) => Image(
+                  fit: BoxFit.cover,
+                  image: AssetImage(
+                    'lib/assets/${getThemedAsset('youtube.png')}',
+                  ),
+                ),
+              ) : QueryArtworkWidget(
                 id: int.parse(controller.id.value),
                 type: ArtworkType.AUDIO,
                 artworkBorder: BorderRadius.zero,
+                artworkHeight: 48,
+                artworkWidth: 48,
                 nullArtworkWidget: Image.asset(
                   controller.isRadio.value
                       ? 'lib/assets/${getThemedAsset('radio.png')}'
                       : 'lib/assets/${getThemedAsset('art.png')}',
                   fit: BoxFit.cover,
                   height: 48,
+                  width: 48,
                 ),
               ),
             ),
