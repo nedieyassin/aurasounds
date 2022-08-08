@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
 class LibraryController extends GetxController {
+
   final DBModel _db = DBModel();
 
   RxList<MediaItem> allSongs = <MediaItem>[].obs;

@@ -276,7 +276,6 @@ class _YTSearchResultsState extends State<YTSearchResults> {
                         suggestionsList = [];
                       });
                     }
-                    ;
                     tempQuery = val;
                     Future.delayed(
                       const Duration(
@@ -299,7 +298,9 @@ class _YTSearchResultsState extends State<YTSearchResults> {
                     );
                   },
                   onSubmitted: (_query) {
-                    if (_query.trim() != '') {}
+                    if (_query.trim() != '') {
+                      search(query);
+                    }
                   },
                 )),
               ),

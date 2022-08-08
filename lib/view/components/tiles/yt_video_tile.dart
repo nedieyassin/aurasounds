@@ -127,9 +127,7 @@ class YTVideoTile extends StatelessWidget {
               ),
               onSelected: (int? value) async {
                 if (value == 1) {
-                  if (onSearch != null) {
-                    onSearch!(video.title);
-                  }
+                  onSearch(video.title);
                 }
                 if (value == 2) {
                   await launchUrl(Uri.parse(video.url),
